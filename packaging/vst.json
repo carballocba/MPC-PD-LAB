@@ -1,0 +1,10 @@
+{
+  "name": "MPC PD Delay", "vendor": "MPC-PD-LAB", "uid": "MPDL", "version": 1000,
+  "so": "mpc_pd_delay.so", "effect": true, "targets": ["armv7"],
+  "params": "params.json", "custom_skin": true, "cc": false, "nrpn": false,
+  "defines": {"MODULE_SUBDIR": "\"data\""},
+  "build": {"root": "..", "sources": ["src/libpd_engine.c"],
+    "cflags": ["-D_FILE_OFFSET_BITS=64"],
+    "cflags_arm": ["-march=armv7-a", "-mfpu=vfpv3-d16", "-mfloat-abi=hard"],
+    "libs": ["-lm", "-ldl", "-lpthread"]}
+}

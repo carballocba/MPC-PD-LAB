@@ -2,7 +2,7 @@
 
 `src/libpd_engine.c` implements the `mpc_engine_t` effect contract from [sd88me/mpc-vst-plugins/wrapper/engine.h](https://github.com/sd88me/mpc-vst-plugins/blob/main/wrapper/engine.h).
 
-**Desktop adapter audio smoke tests pass.** The complete VST2 plugin and MPC hardware remain unverified.
+**Desktop and ARMv7/QEMU audio tests pass.** The ARMv7 VST2 plugin is compiled and offline-verified; MPC hardware remains unverified. See [build instructions](ARMV7_BUILD.md) and [Phase 2 results](PHASE2_VALIDATION.md).
 
 ## Integration prerequisites
 - Build libpd for ARMv7 Linux using the same compatible ABI/toolchain as the wrapper.
@@ -15,7 +15,7 @@
 - The adapter currently accepts exactly 128 frames per callback (two 64-frame ticks); other block sizes return silence.
 
 ## Next development tasks
-1. Add a reproducible ARMv7 build manifest and build script.
+1. Complete separate controlled MPC hardware validation of the Phase 2 build.
 2. Implement per-instance isolation (libpd multi-instance API if supported by target build).
 3. Implement parameters and a controllable delay patch.
 4. Extend desktop regression coverage and add device performance measurements.
