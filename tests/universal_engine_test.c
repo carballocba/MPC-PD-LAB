@@ -19,7 +19,7 @@ static void block(ul_engine *s){ul_rt_enter();ul_process(s,in,out,128);ul_rt_lea
 #else
 static void block(ul_engine *s){ul_process(s,in,out,128);}
 #endif
-static int ready(ul_engine *s,unsigned slot){for(int i=0;i<4000;i++){block(s);if(ul_active_slot(s)==slot&&ul_test_phase(s)==1&&ul_status(s)==UL_READY)return 1;sleep_ms();}return 0;}
+static int ready(ul_engine *s,unsigned slot){for(int i=0;i<4000;i++){block(s);if(ul_active_slot(s)==slot&&ul_test_phase(s)==1&&!ul_test_pending(s))return 1;sleep_ms();}return 0;}
 static void apply(ul_engine *s,unsigned slot){ul_set(s,0,(float)slot);ul_set(s,1,0);ul_set(s,1,1);ul_set(s,1,1);}
 static void copy(const char *a,const char *b){FILE *i=fopen(a,"rb"),*o=fopen(b,"wb");assert(i&&o);char buf[4096];size_t n;while((n=fread(buf,1,sizeof buf,i)))assert(fwrite(buf,1,n,o)==n);assert(!fclose(i));assert(!fclose(o));}
 static void path(char *out,const char *root,const char *sub){assert(snprintf(out,1024,"%s/%s",root,sub)<1024);}
@@ -64,6 +64,13 @@ int main(int argc,char **argv){assert(argc==2);char root[]="/tmp/ul-engine-XXXXX
     /* Missing candidate is rejected before closing current graph. */
     path(b,root,"user/patches/lowpass/main.pd");char backup[1100];snprintf(backup,sizeof backup,"%s.saved",b);assert(!rename(b,backup));
     apply(s,1);for(int i=0;i<50;i++){block(s);sleep_ms();}CHECK(ul_active_slot(s)==0&&ul_status(s)==UL_MISSING);assert(!rename(backup,b));
+    /* Cancel after exclusive handoff: reopen retained immutable old graph. */
+    ul_test_pause(s,0,1);apply(s,1);for(int i=0;i<4000&&ul_test_phase(s)!=3;i++){block(s);sleep_ms();}CHECK(ul_test_phase(s)==3);
+    apply(s,0);ul_test_pause(s,0,0);CHECK(ready(s,0));CHECK(ul_status(s)==UL_CANCELLED);
+    /* Same binary loads edited folder content; no VST rebuild. */
+    path(b,root,"user/patches/lowpass/main.pd");path(a,argv[1],"user/patches/trim/main.pd");copy(a,b);
+    apply(s,1);CHECK(ready(s,1));memset(in,0,sizeof in);in[0]=10000;block(s);CHECK(abs(out[0]-10000)<5&&out[1]==0);
+    path(a,argv[1],"user/patches/lowpass/main.pd");copy(a,b);apply(s,0);CHECK(ready(s,0));
     /* Mains-off allows safe handoff when there are no audio callbacks. */
     ul_mains(s,0);apply(s,1);for(int i=0;i<2000&&ul_active_slot(s)!=1;i++)sleep_ms();CHECK(ul_active_slot(s)==1);
     ul_mains(s,1);CHECK(ready(s,1));
@@ -74,6 +81,9 @@ int main(int argc,char **argv){assert(argc==2);char root[]="/tmp/ul-engine-XXXXX
     atomic_store(&producer_stop,1);assert(!pthread_join(writer,NULL));CHECK(ul_test_pd_overlap(s)==0);
     /* Unsupported config never leaks stale output; recovery is explicit. */
     ul_config(s,0);block(s);for(int k=0;k<256;k++)CHECK(out[k]==0);ul_config(s,1);
+    /* An unavailable recall ID cannot replace the current graph. */
+    unsigned retained=ul_active_slot(s);const char *missing="UL1 absent 1 3f800000 3f800000";
+    CHECK(ul_restore(s,missing,strlen(missing)+1));for(int i=0;i<100;i++){block(s);sleep_ms();}CHECK(ul_active_slot(s)==retained&&ul_status(s)==UL_MISSING);
     ul_mains(s,0);ul_destroy(s);s=ul_create(root);CHECK(s);ul_transport(s,1,0);CHECK(ready(s,0));
     ul_test_pause(s,0,1);apply(s,1);for(int i=0;i<2000&&ul_test_phase(s)!=3;i++){block(s);sleep_ms();}ul_destroy(s);
     printf("PASS Universal stereo, controls, transport, cancellation, rollback, recall, %u repeated switches, concurrent publication and shutdown\n",count);

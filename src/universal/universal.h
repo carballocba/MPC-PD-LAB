@@ -23,6 +23,7 @@ void ul_display(ul_engine *, char *output, size_t capacity);
 /* Test-only worker barriers. No waiting, sleeping or file operations in render. */
 void ul_test_pause(ul_engine *, int preflight, int load);
 unsigned ul_test_phase(ul_engine *);
+unsigned ul_test_pending(ul_engine *);
 unsigned ul_test_pd_overlap(ul_engine *);
 #endif
 #endif

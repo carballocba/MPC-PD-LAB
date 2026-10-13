@@ -180,6 +180,7 @@ static void pause_worker(ul_engine *s,atomic_uint *flag,unsigned token){while(at
 static void transaction(ul_engine *s,unsigned slot,const saved_state *restore,int initial) {
     unsigned token=atomic_load(&s->token),code=UL_READY;
     snapshot *next=NULL,*previous=s->current;
+    uint32_t old_values[2]={atomic_load(&s->values[0]),atomic_load(&s->values[1])};
 #ifdef UL_TESTING
     pause_worker(s,&s->pause_preflight,token);
 #endif
@@ -209,6 +210,7 @@ static void transaction(ul_engine *s,unsigned slot,const saved_state *restore,in
     s->candidate=next;
     goto publish;
 rollback:
+    if(restore&&!restore->none)for(unsigned k=0;k<2;k++){unsigned expected=restore->values[k];atomic_compare_exchange_strong(&s->values[k],&expected,old_values[k]);}
     close_graph(s);discard(next);next=NULL;
     if(previous&&open_graph(s,previous)){next=previous;code=code==UL_CANCELLED?UL_CANCELLED:UL_OBJECT;}
     else if(previous){code=UL_ROLLBACK;discard(previous);previous=NULL;s->current=NULL;}
@@ -382,5 +384,6 @@ int ul_restore(ul_engine *s,const void *data,size_t n) {
 #ifdef UL_TESTING
 void ul_test_pause(ul_engine *s,int pre,int load){atomic_store(&s->pause_preflight,!!pre);atomic_store(&s->pause_load,!!load);}
 unsigned ul_test_phase(ul_engine *s){return atomic_load(&s->phase);}
+unsigned ul_test_pending(ul_engine *s){return atomic_load(&s->pending);}
 unsigned ul_test_pd_overlap(ul_engine *s){return atomic_load(&s->overlap);}
 #endif

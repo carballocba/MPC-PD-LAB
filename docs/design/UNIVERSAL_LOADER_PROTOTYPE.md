@@ -412,3 +412,11 @@ Keep long-term modules behind stable boundaries: a richer manifest/control pool,
 TUI browser, timestamped MIDI output adapter and independent optional CV backends.
 None is linked or required here. Existing community UI, MIDI and external converter
 solutions remain preferred. Do not alter the fixed 350 ms Delay or working Freezer.
+
+### Implementation-time correction: Pd locks
+
+The Linux/ARM callback interposition test found that MULTI=false alone does not
+disable sys_lock: the pinned m_pd.h defaults PDTHREADS=1. v0.1 uses a separate
+Loader-only archive with explicit PDTHREADS=0 and the ownership handoff described
+above. Existing Delay and Freezer builds remain unchanged. See
+../UNIVERSAL_LOADER_IMPLEMENTATION.md for evidence and the regression audit.

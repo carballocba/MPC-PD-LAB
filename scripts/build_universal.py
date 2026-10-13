@@ -8,20 +8,22 @@ if a.mode=='armv7' and a.sanitizer:sys.exit('Native sanitizers only; ARM/QEMU is
 deps=ROOT/'work/deps';subprocess.run([sys.executable,str(ROOT/'scripts/check_pins.py'),str(deps)],check=True)
 suffix='-'+a.sanitizer if a.sanitizer else '';out=ROOT/'work'/('universal-'+a.mode+suffix);out.mkdir(parents=True,exist_ok=True)
 cc='arm-linux-gnueabihf-gcc' if a.mode=='armv7' else os.environ.get('CC','cc')
-flags=['-D_FILE_OFFSET_BITS=64','-fPIC','-fvisibility=hidden']
+flags=['-DPDTHREADS=0','-D_FILE_OFFSET_BITS=64','-fPIC','-fvisibility=hidden']
 if a.mode=='armv7':flags+=['-march=armv7-a','-mfpu=vfpv3-d16','-mfloat-abi=hard']
 san=['-fsanitize='+('address,undefined' if a.sanitizer=='address' else 'thread'),'-fno-omit-frame-pointer','-g'] if a.sanitizer else []
 if sys.platform=='darwin':san=[flag for flag in san if flag!='-g']
-if a.mode=='native':
- libpd=out/'libpd'
- if not libpd.exists():shutil.copytree(deps/'libpd',libpd,ignore=shutil.ignore_patterns('.git','*.o','libs'))
- (libpd/'libs').mkdir(exist_ok=True)
- if not (libpd/'libs/libpd.a').exists():
-  subprocess.run(['make','-C',str(libpd),'-j2','CC='+cc,'STATIC=true','UTIL=false','EXTRA=false','MULTI=false','SETLOCALE=false','ADDITIONAL_CFLAGS='+' '.join(flags+san),'ADDITIONAL_LDFLAGS='+' '.join(san),'libpd'],check=True)
- archive=libpd/'libs/libpd.a'
-else:
- libpd=ROOT/'work/armv7/libpd';archive=ROOT/'work/armv7/libpd.a'
- if not archive.exists():sys.exit('Build the pinned baseline ARM archive with scripts/build.sh armv7 first')
+# Loader-only libpd archive: MULTI=false alone still leaves PDTHREADS=1 in Pd.
+# Explicitly disable internal mutexes; the engine enforces exclusive ownership.
+libpd=out/'libpd'
+key=json.dumps({'flags':flags+san,'cc':cc},sort_keys=True)
+stamp=out/'libpd-build-config.json'
+if libpd.exists() and (not stamp.exists() or stamp.read_text()!=key):shutil.rmtree(libpd)
+if not libpd.exists():shutil.copytree(deps/'libpd',libpd,ignore=shutil.ignore_patterns('.git','*.o','libs'))
+(libpd/'libs').mkdir(exist_ok=True)
+if not (libpd/'libs/libpd.a').exists():
+ subprocess.run(['make','-C',str(libpd),'-j2','CC='+cc,'STATIC=true','UTIL=false','EXTRA=false','MULTI=false','SETLOCALE=false','ADDITIONAL_CFLAGS='+' '.join(flags+san),'ADDITIONAL_LDFLAGS='+' '.join(san),'libpd'],check=True)
+ stamp.write_text(key)
+archive=libpd/'libs/libpd.a'
 incs=['-I'+str(ROOT/'src/universal'),'-I'+str(libpd/'libpd_wrapper'),'-I'+str(libpd/'pure-data/src'),'-I'+str(deps/'mpc-vst-plugins/wrapper')]
 common=[cc,'-std=gnu11','-O2','-Wall','-Wextra','-Werror','-Wno-misleading-indentation',*flags,*san,*incs]
 sources=[ROOT/'src/universal/engine.c',ROOT/'src/universal/manifest.c']

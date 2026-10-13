@@ -22,7 +22,7 @@ Rollback reopens the retained snapshot; a rollback failure becomes safe silence.
 
 Fade ramps are 512 samples out/in at 44.1 kHz. Audio processing is strictly 128
 frames/stereo and rejects unsupported configuration. libpd is private and built
-without multi-instance locking; one instance per loaded module is supported.
+with `MULTI=false` **and `PDTHREADS=0`**; one instance per loaded module is supported.
 This restriction avoids pretending independent simultaneous Pd contexts exist.
 Project chunks store stable ID/revision and normalized Gain/Mix, never catalog
 index or machine-specific paths. A bounded mailbox transfers restores to the
@@ -62,3 +62,13 @@ validation without installers. The legacy installer-fixture CI is skipped only
 for this development branch to honor the explicit no-installer instruction.
 Code and package are reviewable independently of hardware approval. Native
 sanitizers and stress tests provide evidence, not proof of deadline performance.
+
+## Correction discovered by the callback audit
+
+The pinned Pd header defaults PDTHREADS to 1 even with libpd MULTI=false. The
+initial Linux/ARM callback audit demonstrated a pthread_mutex_lock call in
+libpd_process_short. Loader therefore builds its **own** isolated archive with
+PDTHREADS=0, leaving the existing Delay/Freezer archives and code unchanged.
+Exclusive host ownership replaces Pd's internal mutex. This corrects the earlier
+design assumption that MULTI=false by itself makes sys_lock a no-op. The native
+and ARM callback audits must pass with this configuration.

@@ -85,3 +85,12 @@ import/export sets, verifies the chosen API provider under actual loader flags, 
 one explicitly licensed external, processes it, checks multiple-plugin isolation and
 repeated graph unload/reload, and measures original-One timing. No such runtime claim
 is made here.
+
+## Implementation correction (v0.1 callback audit)
+
+The conclusion above about MULTI=false disabling mutexes was incomplete:
+[src/m_pd.h](https://github.com/pure-data/pure-data/blob/f009fd8d7b537e209e09898d487fdf1bf547da2b/src/m_pd.h#L1013) defaults PDTHREADS to 1.
+Linux and ARM callback audits demonstrated a mutex call. Loader now explicitly
+builds its isolated archive with PDTHREADS=0 and MULTI=false; only that combined
+configuration supplies the no-op sys_lock. No legacy plugin is rebuilt with
+changed flags. tests/universal_rt_audit.c guards this requirement.
