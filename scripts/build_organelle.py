@@ -41,7 +41,13 @@ else:
     shared=['-shared','-Wl,--no-undefined,-Bsymbolic,--exclude-libs,ALL']
     run=['qemu-arm','-L','/usr/arm-linux-gnueabihf'] if mode=='armv7' else []
 so=out/'organelle_granular_freezer.so'
-subprocess.run([*common,'-fPIC','-fvisibility=hidden',engine,str(up/'wrapper/vst2_wrap.c'),*libs,*shared,'-o',str(so)],check=True)
+compile_plugin=[*common,'-fPIC','-fvisibility=hidden',engine,str(up/'wrapper/vst2_wrap.c'),*libs,*shared,'-o',str(so)]
+subprocess.run(compile_plugin,check=True)
+if mode=='armv7':
+    first=so.read_bytes()
+    subprocess.run(compile_plugin,check=True)
+    assert so.read_bytes()==first, 'Repeated ARM plugin link differs'
+    print('PASS repeated ARM plugin compile/link byte-identical (same pinned archive/toolchain)')
 for name in ('organelle_engine_test','organelle_vst_test'):
     sources=[str(ROOT/'tests'/ (name+'.c'))]
     if name=='organelle_engine_test': sources.insert(0,engine)
