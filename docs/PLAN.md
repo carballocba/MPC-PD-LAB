@@ -33,6 +33,6 @@ Test continuous operation and rapid parameter changes. Avoid blocking or synchro
 7. Select an Organelle patch and audit external dependencies.
 
 ## Current status
-Desktop libpd adapter integration is verified with engine and hosted audio smoke tests
-at 44.1 kHz / 128 frames; see LIBPD_ADAPTER.md for results. ARMv7 packaging
-and hardware benchmarking are next. No plugin has been deployed or tested on the MPC.
+ARMv7 VST2 builds and architecture/dependency checks pass, along with desktop
+and ARM/QEMU audio/host tests. See PHASE2_VALIDATION.md and ARMV7_BUILD.md.
+No plugin has been deployed or tested on the MPC. Hardware validation is next.

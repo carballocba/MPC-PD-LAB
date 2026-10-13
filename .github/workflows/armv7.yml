@@ -1,0 +1,30 @@
+name: ARMv7 offline build
+on:
+  pull_request:
+  push:
+    branches: [main, 'phase2/**']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Build and test ARMv7 without hardware
+        run: scripts/armv7.sh
+      - name: Build and test desktop
+        run: scripts/build.sh desktop
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: mpc-pd-delay-offline-validation
+          path: |
+            work/armv7/mpc-pd-delay-armv7.tar.gz
+            work/armv7/*report.txt
+            work/armv7/*build.log
+            work/armv7/toolchain-packages.txt
+            work/desktop/*report.txt
+            work/desktop/*build.log
+          retention-days: 14

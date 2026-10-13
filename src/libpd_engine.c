@@ -9,6 +9,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
+#include <pthread.h>
+#include <unistd.h>
 
 typedef struct {
     void *patch;
@@ -18,19 +20,25 @@ typedef struct {
  * instances are supported. v0.1 intentionally supports one instance only. */
 static int initialized = 0;
 static int active = 0;
+/* Only lifecycle calls take this lock; the audio callback never takes it.
+ * The host must stop audio before destroying the active instance. */
+static pthread_mutex_t lifecycle_lock = PTHREAD_MUTEX_INITIALIZER;
 
-static void *pd_create(const char *data_dir) {
+static void *pd_create_locked(const char *data_dir) {
     if (active) return NULL; /* multi-instance is a future milestone */
     if (!initialized) {
         if (libpd_init() != 0) return NULL;
         initialized = 1;
     }
-    if (libpd_init_audio(2, 2, 44100) != 0) return NULL;
-    char dir[1024];
-    if (data_dir && data_dir[0])
-        snprintf(dir, sizeof dir, "%s", data_dir);
-    else
-        snprintf(dir, sizeof dir, ".");
+    if (libpd_blocksize() != 64 || libpd_init_audio(2, 2, 44100) != 0) return NULL;
+    const char *dir = data_dir && data_dir[0] ? data_dir : ".";
+    /* Reject incomplete bundles instead of loading a silent host canvas. */
+    const char *files[] = {"libpd_host.pd", "stereo_delay_smoke.pd"};
+    for (unsigned i = 0; i < sizeof files / sizeof files[0]; ++i) {
+        char path[1200];
+        int n = snprintf(path, sizeof path, "%s/%s", dir, files[i]);
+        if (n < 0 || n >= (int)sizeof path || access(path, R_OK) != 0) return NULL;
+    }
     /* The delay is an abstraction with inlet~/outlet~ ports. The host patch
      * connects those ports to libpd's input/output channels via adc~/dac~. */
     void *patch = libpd_openfile("libpd_host.pd", dir);
@@ -44,12 +52,20 @@ static void *pd_create(const char *data_dir) {
     active = 1;
     return s;
 }
+static void *pd_create(const char *data_dir) {
+    pthread_mutex_lock(&lifecycle_lock);
+    void *s = pd_create_locked(data_dir);
+    pthread_mutex_unlock(&lifecycle_lock);
+    return s;
+}
 static void pd_destroy(void *inst) {
     pd_instance *s = inst;
     if (!s) return;
+    pthread_mutex_lock(&lifecycle_lock);
     libpd_closefile(s->patch);
     free(s);
     active = 0;
+    pthread_mutex_unlock(&lifecycle_lock);
 }
 static void pd_midi(void *inst, const uint8_t *msg, int len) {
     (void)inst; (void)msg; (void)len;
@@ -62,6 +78,7 @@ static int pd_get(void *inst, const char *key, char *buf, int len) {
     return 0;
 }
 static void pd_process(void *inst, const int16_t *in_lr, int16_t *out_lr, int frames) {
+    if (frames <= 0) return;
     pd_instance *s = inst;
     if (!s || !in_lr || !out_lr) {
         if (out_lr) memset(out_lr, 0, (size_t)frames * 2 * sizeof(int16_t));
