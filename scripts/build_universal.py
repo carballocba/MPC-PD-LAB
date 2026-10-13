@@ -15,10 +15,16 @@ if sys.platform=='darwin':san=[flag for flag in san if flag!='-g']
 # Loader-only libpd archive: MULTI=false alone still leaves PDTHREADS=1 in Pd.
 # Explicitly disable internal mutexes; the engine enforces exclusive ownership.
 libpd=out/'libpd'
-key=json.dumps({'flags':flags+san,'cc':cc},sort_keys=True)
+key=json.dumps({'flags':flags+san,'cc':cc,'pd_no_threads_fix':1},sort_keys=True)
 stamp=out/'libpd-build-config.json'
 if libpd.exists() and (not stamp.exists() or stamp.read_text()!=key):shutil.rmtree(libpd)
-if not libpd.exists():shutil.copytree(deps/'libpd',libpd,ignore=shutil.ignore_patterns('.git','*.o','libs'))
+if not libpd.exists():
+ shutil.copytree(deps/'libpd',libpd,ignore=shutil.ignore_patterns('.git','*.o','libs'))
+ # Minimal repairs in Pd's otherwise unused no-thread branch; never patch deps.
+ source=libpd/'pure-data/src/s_inter.c';text=source.read_text()
+ for old,new in [('#if PDTHREADS\n#include "pthread.h"\n#endif','#include "pthread.h"'),('void pd_queue_mess(struct _pdinstance instance,','void pd_queue_mess(struct _pdinstance *instance,')]:
+  assert text.count(old)==1,'Pinned no-thread repair anchor changed';text=text.replace(old,new)
+ source.write_text(text)
 (libpd/'libs').mkdir(exist_ok=True)
 if not (libpd/'libs/libpd.a').exists():
  subprocess.run(['make','-C',str(libpd),'-j2','CC='+cc,'STATIC=true','UTIL=false','EXTRA=false','MULTI=false','SETLOCALE=false','ADDITIONAL_CFLAGS='+' '.join(flags+san),'ADDITIONAL_LDFLAGS='+' '.join(san),'libpd'],check=True)
@@ -33,7 +39,7 @@ if pkg.exists():shutil.rmtree(pkg)
 (pkg/'data/user/patches').mkdir(parents=True);(pkg/'data/defaults').mkdir(parents=True);(pkg/'licenses').mkdir()
 for folder in ['trim','lowpass']:shutil.copytree(ROOT/'patches/universal'/folder,pkg/'data/user/patches'/folder)
 for target in ['user','defaults']:shutil.copy2(ROOT/'patches/universal/catalog.json',pkg/'data'/target/'catalog.json')
-for source,name in [(deps/'libpd/LICENSE.txt','libpd.txt'),(deps/'libpd/pure-data/LICENSE.txt','pure-data.txt'),(deps/'mpc-vst-plugins/LICENSE','wrapper.txt'),(ROOT/'vendor/universal/LICENSE','jsmn.txt'),(ROOT/'src/universal/LICENSE','universal.txt')]:shutil.copy2(source,pkg/'licenses'/name)
+for source,name in [(deps/'libpd/LICENSE.txt','libpd.txt'),(deps/'libpd/pure-data/LICENSE.txt','pure-data.txt'),(deps/'mpc-vst-plugins/LICENSE','wrapper.txt'),(ROOT/'vendor/universal/LICENSE','jsmn.txt'),(ROOT/'src/universal/LICENSE','universal.txt'),(ROOT/'vendor/universal/pd-no-threads.patch','pd-no-threads.patch')]:shutil.copy2(source,pkg/'licenses'/name)
 shared=['-dynamiclib'] if sys.platform=='darwin' else ['-shared','-Wl,--no-undefined,-Bsymbolic,--exclude-libs,ALL']
 so=pkg/'mpc_pd_universal_loader.so'
 subprocess.run([*common,*map(str,sources),str(ROOT/'src/universal/vst2_wrap.c'),*libs,*shared,'-o',str(so)],check=True)

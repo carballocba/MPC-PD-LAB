@@ -1,0 +1,21 @@
+--- a/pure-data/src/s_inter.c
++++ b/pure-data/src/s_inter.c
+@@ -93,9 +93,7 @@
+ 
+ #define LOCALHOST "localhost"
+ 
+-#if PDTHREADS
+ #include "pthread.h"
+-#endif
+ 
+ typedef struct _fdpoll
+ {
+@@ -2112,7 +2110,7 @@
+ void pd_globalunlock(void) {}
+ 
+     /* doesn't really make sense without threads... */
+-void pd_queue_mess(struct _pdinstance instance, t_pd *obj, void *data, t_messfn fn)
++void pd_queue_mess(struct _pdinstance *instance, t_pd *obj, void *data, t_messfn fn)
+ {
+     fn(obj, data);
+ }

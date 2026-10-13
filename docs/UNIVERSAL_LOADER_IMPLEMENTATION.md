@@ -72,3 +72,10 @@ PDTHREADS=0, leaving the existing Delay/Freezer archives and code unchanged.
 Exclusive host ownership replaces Pd's internal mutex. This corrects the earlier
 design assumption that MULTI=false by itself makes sys_lock a no-op. The native
 and ARM callback audits must pass with this configuration.
+
+The pinned no-thread Pd branch also fails compilation: pd_queue_mess has a
+by-value instance where its public declaration takes a pointer; macOS scheduling
+code lacks pthread declarations when its include is conditional. Two minimal
+repairs are applied only to the copied Loader build source, recorded verbatim in
+vendor/universal/pd-no-threads.patch and redistributed in licenses/. DSP sources
+and the pinned dependency checkout are unchanged.
