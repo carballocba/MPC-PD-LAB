@@ -24,7 +24,7 @@ def audit(root):
   assert sorted(m['controls'],key=lambda c:c['slot'])==[{'slot':i,'key':key,'receiver':'ul-'+key,'min':0,'max':1,'default':1} for i,key in enumerate(['gain','mix'])]
   abstracts={f[:-3] for f in files};edges={f[:-3]:set() for f in files};total=0;hashes={}
   for filename in files:
-   assert re.fullmatch('[a-zA-Z0-9_.-]+\.pd',filename) and filename!='host.pd'
+   assert re.fullmatch(r'[a-zA-Z0-9_.-]+\.pd',filename) and filename!='host.pd'
    path=directory/filename;assert path.is_file() and not path.is_symlink();b=path.read_bytes();total+=len(b)
    assert 0<len(b)<=131072 and b'\0' not in b
    hashes[filename]=hashlib.sha256(b).hexdigest()

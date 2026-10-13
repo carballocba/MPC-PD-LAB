@@ -13,7 +13,12 @@
 #define CHECK(x) do{if(!(x)){fprintf(stderr,"FAIL engine:%d: %s status=%u phase=%u active=%u\n",__LINE__,#x,ul_status(s),ul_test_phase(s),ul_active_slot(s));abort();}}while(0)
 static int16_t in[256],out[256];
 static void sleep_ms(void){struct timespec t={0,1000000};nanosleep(&t,NULL);}
+#ifdef UL_RT_AUDIT
+extern void ul_rt_enter(void),ul_rt_leave(void);
+static void block(ul_engine *s){ul_rt_enter();ul_process(s,in,out,128);ul_rt_leave();}
+#else
 static void block(ul_engine *s){ul_process(s,in,out,128);}
+#endif
 static int ready(ul_engine *s,unsigned slot){for(int i=0;i<4000;i++){block(s);if(ul_active_slot(s)==slot&&ul_test_phase(s)==1&&ul_status(s)==UL_READY)return 1;sleep_ms();}return 0;}
 static void apply(ul_engine *s,unsigned slot){ul_set(s,0,(float)slot);ul_set(s,1,0);ul_set(s,1,1);ul_set(s,1,1);}
 static void copy(const char *a,const char *b){FILE *i=fopen(a,"rb"),*o=fopen(b,"wb");assert(i&&o);char buf[4096];size_t n;while((n=fread(buf,1,sizeof buf,i)))assert(fwrite(buf,1,n,o)==n);assert(!fclose(i));assert(!fclose(o));}

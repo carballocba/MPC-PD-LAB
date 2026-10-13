@@ -25,8 +25,16 @@ execute installers.
 Use the pinned sd88me portable installer included in the ZIP, following
 [upstream installation documentation](https://sd88me.github.io/mpc-vst-plugins/install.html).
 On macOS, extract the entire ZIP, open Terminal in the extracted release folder,
-and consult `bash install.sh --help` only during the approved installation session.
-Provide the existing SSH connection details required by that installer. Select
+The bundled script runs on the device, not on macOS; it has no `--help` option.
+Only during the approved hardware session, follow the upstream copy/run sequence:
+
+```sh
+unzip MPC-PD-Universal-Loader-0.1.0-mpc-armv7.zip
+scp -r MPC-PD-Universal-Loader-0.1.0 root@<device-ip>:/tmp/
+ssh root@<device-ip> sh /tmp/MPC-PD-Universal-Loader-0.1.0/install.sh -t /storage/Synths
+```
+
+Replace `<device-ip>` with the verified address; retain the interactive confirmation. Select
 `/storage/Synths` explicitly with its supported `-t /storage/Synths` target option
 for the verified original MPC One. The installer also supports other mounted
 Synths destinations; do not assume `/sdcard/Synths` is the correct storage.
@@ -69,7 +77,9 @@ retry a failing patch in a live performance. Plugin crashes can terminate the MP
 application: restart it and reopen a known-good project without Loader if needed.
 
 Use the supported sd88me uninstall operation documented by the bundled installer
-and upstream instructions during the approved session. Verify its target is only
+and upstream instructions during the approved session:
+`ssh root@<device-ip> sh /tmp/MPC-PD-Universal-Loader-0.1.0/uninstall.sh -t /storage/Synths`.
+Verify its target is only
 Loader/MPUL. Back up Loader user data first. Do not recursively delete Synths or
 replace settings wholesale. If registration restoration is required, use the
 installer's own dated complete backup and documented recovery procedure after

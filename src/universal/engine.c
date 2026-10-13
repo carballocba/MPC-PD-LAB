@@ -74,7 +74,7 @@ static void log_status(ul_engine *s,unsigned code) {
     if(!lstat(path,&st)&&st.st_size>65536){char old[1220];snprintf(old,sizeof old,"%s.previous",path);rename(path,old);}
     int fd=open(path,O_WRONLY|O_CREAT|O_APPEND|O_NOFOLLOW,0600);if(fd<0)return;
     char b[96];int n=snprintf(b,sizeof b,"status=%u active=%u\n",code,atomic_load(&s->active));
-    if(n>0)(void)write(fd,b,(size_t)n);close(fd);
+    if(n>0){ssize_t written=write(fd,b,(size_t)n);if(written!=n){close(fd);return;}}close(fd);
 }
 static int make_dir(const char *p) {
     struct stat st;if(!lstat(p,&st))return S_ISDIR(st.st_mode)&&!S_ISLNK(st.st_mode);
@@ -117,6 +117,11 @@ static unsigned prepare(ul_engine *s,unsigned slot,const saved_state *restore,sn
         char *text=malloc((size_t)before.st_size+1);if(!text){close(in);discard(p);return UL_INVALID;}
         size_t used=0;while(used<(size_t)before.st_size){ssize_t got=read(in,text+used,(size_t)before.st_size-used);if(got<=0)break;used+=(size_t)got;}
         int valid=!fstat(in,&after)&&used==(size_t)before.st_size&&before.st_size==after.st_size&&before.st_mtime==after.st_mtime;
+#ifdef __APPLE__
+        valid &= before.st_mtimespec.tv_nsec==after.st_mtimespec.tv_nsec;
+#else
+        valid &= before.st_mtim.tv_nsec==after.st_mtim.tv_nsec;
+#endif
         close(in);text[used]=0;valid&=!memchr(text,0,used)&&ul_audit_pd(text,used,&p->spec);
         if(!valid){free(text);discard(p);return UL_OBJECT;}
         n=snprintf(dest,sizeof dest,"%s/%s",p->path,p->spec.files[k]);
@@ -247,7 +252,7 @@ static void *worker(void *data) {
     if(ok&&lstat(catalog,&st)&&errno==ENOENT){
         char defaults[1200];snprintf(defaults,sizeof defaults,"%s/defaults/catalog.json",s->root);
         FILE *in=fopen(defaults,"rb");int fd=open(catalog,O_WRONLY|O_CREAT|O_EXCL|O_NOFOLLOW,0600);
-        if(in&&fd>=0){char b[16385];size_t n=fread(b,1,sizeof b,in);if(n<=16384)(void)write(fd,b,n);}
+        if(in&&fd>=0){char b[16385];size_t n=fread(b,1,sizeof b,in);if(n>16384||ferror(in)||write(fd,b,n)!=(ssize_t)n)ok=0;}else ok=0;
         if(in)fclose(in);if(fd>=0)close(fd);
     }
     ok=ok&&!lstat(catalog,&st)&&S_ISREG(st.st_mode)&&!S_ISLNK(st.st_mode)&&ul_catalog_read(catalog,s->catalog);

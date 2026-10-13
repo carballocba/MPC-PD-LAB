@@ -33,6 +33,17 @@ jobs:
           python3 work/packaging-upstream/tools/test_skin_compat.py
       - name: Existing Delay baseline
         run: scripts/build.sh desktop
+      - name: Unchanged Freezer reference and native coexistence
+        run: |
+          git clone https://github.com/carballocba/MPC-PD-LAB.git work/freezer-reference
+          git -C work/freezer-reference checkout --detach 879ab14336fd5c4576ab9832127b4047aaa2a2b6
+          mkdir -p work/freezer-reference/work
+          ln -s "$PWD/work/deps" work/freezer-reference/work/deps
+          ln -s "$PWD/work/desktop" work/freezer-reference/work/desktop
+          python3 work/freezer-reference/scripts/build_organelle.py desktop
+          cc -std=gnu11 -O2 -Wall -Wextra -Werror tests/universal_coexist_test.c -ldl -lm -o work/universal-coexist-test
+          work/universal-coexist-test 'work/universal-native/package/CARBALLO - VST - MPC PD Universal Loader/mpc_pd_universal_loader.so' 'work/desktop/package/MPC-PD-LAB - VST - MPC PD Delay/mpc_pd_delay.so' work/freezer-reference/work/organelle-desktop/organelle_granular_freezer.so
+          test -z "$(git -C work/freezer-reference status --porcelain --untracked-files=no)"
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: always()
         with:
