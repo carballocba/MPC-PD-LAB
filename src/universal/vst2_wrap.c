@@ -63,11 +63,11 @@ static intptr_t dispatch(AEffect *fx,int32_t op,int32_t index,intptr_t v,void *p
     case 5:text(p,"Folder loader",24);return 1;
     case 6:text(p,"",8);return 1;
     case 7:
-        if(index==0){char b[24];ul_display(w->engine,b,sizeof b);text(p,b,24);}
-        else if(index==1)text(p,get_parameter(fx,1)>=0.5f?"Load":"Ready",24);
-        else if(index==2||index==3){char b[24];unsigned z=(unsigned)(get_parameter(fx,index)*1000+0.5f);snprintf(b,sizeof b,"%u.%03u",z/1000,z%1000);text(p,b,24);}
+        if(index==0){char b[24];ul_display(w->engine,b,sizeof b);text(p,b,8);}
+        else if(index==1)text(p,get_parameter(fx,1)>=0.5f?"Load":"Ready",8);
+        else if(index==2||index==3){char b[24];unsigned z=(unsigned)(get_parameter(fx,index)*1000+0.5f);snprintf(b,sizeof b,"%u.%03u",z/1000,z%1000);text(p,b,8);}
         else return 0;return 1;
-    case 8:if(index<0||index>3)return 0;text(p,names[index],24);return 1;
+    case 8:if(index<0||index>3)return 0;text(p,names[index],8);return 1;
     case 10:atomic_store(&w->rate,bits(opt));ul_config(w->engine,opt==44100.0f&&atomic_load(&w->block)==128);return 1;
     case 11:atomic_store(&w->block,(unsigned)v);ul_config(w->engine,atomic_load(&w->rate)==bits(44100)&&v==128);return 1;
     case 12:ul_mains(w->engine,v!=0);return 1;

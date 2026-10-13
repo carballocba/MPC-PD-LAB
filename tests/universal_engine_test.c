@@ -10,6 +10,7 @@
 #include <sys/stat.h>
 #include <math.h>
 #include <time.h>
+#include <dirent.h>
 #define CHECK(x) do{if(!(x)){fprintf(stderr,"FAIL engine:%d: %s status=%u phase=%u active=%u\n",__LINE__,#x,ul_status(s),ul_test_phase(s),ul_active_slot(s));abort();}}while(0)
 static int16_t in[256],out[256];
 static void sleep_ms(void){struct timespec t={0,1000000};nanosleep(&t,NULL);}
@@ -83,9 +84,22 @@ int main(int argc,char **argv){assert(argc==2);char root[]="/tmp/ul-engine-XXXXX
     ul_config(s,0);block(s);for(int k=0;k<256;k++)CHECK(out[k]==0);ul_config(s,1);
     /* An unavailable recall ID cannot replace the current graph. */
     unsigned retained=ul_active_slot(s);const char *missing="UL1 absent 1 3f800000 3f800000";
-    CHECK(ul_restore(s,missing,strlen(missing)+1));for(int i=0;i<100;i++){block(s);sleep_ms();}CHECK(ul_active_slot(s)==retained&&ul_status(s)==UL_MISSING);
+    int accepted=0;for(int i=0;i<4000&&!accepted;i++){accepted=ul_restore(s,missing,strlen(missing)+1);block(s);sleep_ms();}CHECK(accepted);for(int i=0;i<100;i++){block(s);sleep_ms();}CHECK(ul_active_slot(s)==retained&&ul_status(s)==UL_MISSING);
     ul_mains(s,0);ul_destroy(s);s=ul_create(root);CHECK(s);ul_transport(s,1,0);CHECK(ready(s,0));
     ul_test_pause(s,0,1);apply(s,1);for(int i=0;i<2000&&ul_test_phase(s)!=3;i++){block(s);sleep_ms();}ul_destroy(s);
+    /* Stable IDs survive catalog reorder on reopen, then explicit no-patch recall. */
+    path(b,root,"user/catalog.json");f=fopen(b,"wb");assert(f);
+    fputs("{\"schema\":1,\"patches\":[{\"id\":\"stereo-lowpass\",\"folder\":\"patches/lowpass\"},{\"id\":\"stereo-trim\",\"folder\":\"patches/trim\"}]}",f);fclose(f);
+    s=ul_create(root);CHECK(s);ul_transport(s,1,0);CHECK(ul_restore(s,saved,(size_t)saved_n));CHECK(ready(s,0));char reordered[256];CHECK(ul_save(s,reordered,sizeof reordered)&&strstr(reordered,"stereo-lowpass"));
+    CHECK(ul_restore(s,"UL0",4));for(int i=0;i<200;i++){block(s);sleep_ms();}CHECK(ul_active_slot(s)==2);for(int k=0;k<256;k++)CHECK(out[k]==0);
+    apply(s,1);CHECK(ready(s,1));
+    /* Sabotage only this test's owned snapshot to demonstrate rollback failure. */
+    path(b,root,"user/.loader-cache");DIR *cache=opendir(b);assert(cache);struct dirent *entry;char session[1024]={0};
+    while((entry=readdir(cache)))if(!strncmp(entry->d_name,"session-",8)){assert(snprintf(session,sizeof session,"%s/%s",b,entry->d_name)<1024);break;}closedir(cache);CHECK(session[0]);
+    for(unsigned i=0;i<2;i++){char host[1200];snprintf(host,sizeof host,"%s/snapshot-%u/host.pd",session,i);unlink(host);}
+    path(b,root,"user/patches/lowpass/main.pd");f=fopen(b,"ab");assert(f);fputs("#X connect 0 0 99 0;\n",f);fclose(f);
+    apply(s,0);for(int i=0;i<300;i++){block(s);sleep_ms();}CHECK(ul_active_slot(s)==2&&ul_status(s)==UL_ROLLBACK);for(int k=0;k<256;k++)CHECK(out[k]==0);
+    apply(s,1);CHECK(ready(s,1));ul_destroy(s);
     printf("PASS Universal stereo, controls, transport, cancellation, rollback, recall, %u repeated switches, concurrent publication and shutdown\n",count);
     return 0;
 }

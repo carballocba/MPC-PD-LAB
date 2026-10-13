@@ -28,6 +28,7 @@ int main(int argc,char**argv){CHECK(argc==2);void *lib=dlopen(argv[1],RTLD_NOW|R
  e->dispatcher(e,10,0,0,NULL,44100);e->dispatcher(e,11,0,128,NULL,0);e->dispatcher(e,12,0,1,NULL,0);
  for(int i=0;i<128;i++)left[i]=0.25f;
  CHECK(wait_patch(e,"stereo-trim"));for(int k=0;k<10;k++)tick(e);CHECK(fabsf(ol[100]-0.25f)<0.0002f&&or_[100]==0);
+ for(int op=7;op<=8;op++)for(int i=0;i<4;i++){struct{char text[8];unsigned char guard[16];} bounded;memset(&bounded,0xa5,sizeof bounded);CHECK(e->dispatcher(e,op,i,0,bounded.text,0));CHECK(memchr(bounded.text,0,8));for(unsigned k=0;k<16;k++)CHECK(bounded.guard[k]==0xa5);}
  char names[4][24];for(int i=0;i<4;i++)CHECK(e->dispatcher(e,8,i,0,names[i],0));CHECK(!strcmp(names[0],"Patch")&&!strcmp(names[1],"Apply")&&!strcmp(names[2],"Gain")&&!strcmp(names[3],"Mix"));
  e->setParameter(e,2,0.37f);e->setParameter(e,3,0.4f);for(int i=0;i<10;i++)tick(e);CHECK(fabsf(ol[100]-0.25f*0.37f)<0.0003f);
  char saved[256],b[256];int n=chunk(e,saved);CHECK(n>0);
