@@ -1,0 +1,48 @@
+#!/usr/bin/env python3
+"""Build only Universal in isolated output trees; never install or touch other plugins."""
+from pathlib import Path
+import argparse,os,shutil,subprocess,sys,json
+ROOT=Path(__file__).resolve().parents[1]
+p=argparse.ArgumentParser();p.add_argument('mode',choices=['native','armv7']);p.add_argument('--sanitizer',choices=['address','thread']);a=p.parse_args()
+if a.mode=='armv7' and a.sanitizer:sys.exit('Native sanitizers only; ARM/QEMU is a separate correctness run')
+deps=ROOT/'work/deps';subprocess.run([sys.executable,str(ROOT/'scripts/check_pins.py'),str(deps)],check=True)
+suffix='-'+a.sanitizer if a.sanitizer else '';out=ROOT/'work'/('universal-'+a.mode+suffix);out.mkdir(parents=True,exist_ok=True)
+cc='arm-linux-gnueabihf-gcc' if a.mode=='armv7' else os.environ.get('CC','cc')
+flags=['-D_FILE_OFFSET_BITS=64','-fPIC','-fvisibility=hidden']
+if a.mode=='armv7':flags+=['-march=armv7-a','-mfpu=vfpv3-d16','-mfloat-abi=hard']
+san=['-fsanitize='+('address,undefined' if a.sanitizer=='address' else 'thread'),'-fno-omit-frame-pointer','-g'] if a.sanitizer else []
+if sys.platform=='darwin':san=[flag for flag in san if flag!='-g']
+if a.mode=='native':
+ libpd=out/'libpd'
+ if not libpd.exists():shutil.copytree(deps/'libpd',libpd,ignore=shutil.ignore_patterns('.git','*.o','libs'))
+ (libpd/'libs').mkdir(exist_ok=True)
+ if not (libpd/'libs/libpd.a').exists():
+  subprocess.run(['make','-C',str(libpd),'-j2','CC='+cc,'STATIC=true','UTIL=false','EXTRA=false','MULTI=false','SETLOCALE=false','ADDITIONAL_CFLAGS='+' '.join(flags+san),'ADDITIONAL_LDFLAGS='+' '.join(san),'libpd'],check=True)
+ archive=libpd/'libs/libpd.a'
+else:
+ libpd=ROOT/'work/armv7/libpd';archive=ROOT/'work/armv7/libpd.a'
+ if not archive.exists():sys.exit('Build the pinned baseline ARM archive with scripts/build.sh armv7 first')
+incs=['-I'+str(ROOT/'src/universal'),'-I'+str(libpd/'libpd_wrapper'),'-I'+str(libpd/'pure-data/src'),'-I'+str(deps/'mpc-vst-plugins/wrapper')]
+common=[cc,'-std=gnu11','-O2','-Wall','-Wextra','-Werror','-Wno-misleading-indentation',*flags,*san,*incs]
+sources=[ROOT/'src/universal/engine.c',ROOT/'src/universal/manifest.c']
+libs=[str(archive),'-lm','-lpthread']+([] if sys.platform=='darwin' else ['-ldl'])
+pkg=out/'package'/'CARBALLO - VST - MPC PD Universal Loader'
+if pkg.exists():shutil.rmtree(pkg)
+(pkg/'data/user/patches').mkdir(parents=True);(pkg/'data/defaults').mkdir(parents=True);(pkg/'licenses').mkdir()
+for folder in ['trim','lowpass']:shutil.copytree(ROOT/'patches/universal'/folder,pkg/'data/user/patches'/folder)
+for target in ['user','defaults']:shutil.copy2(ROOT/'patches/universal/catalog.json',pkg/'data'/target/'catalog.json')
+for source,name in [(deps/'libpd/LICENSE.txt','libpd.txt'),(deps/'libpd/pure-data/LICENSE.txt','pure-data.txt'),(deps/'mpc-vst-plugins/LICENSE','wrapper.txt'),(ROOT/'vendor/universal/LICENSE','jsmn.txt'),(ROOT/'src/universal/LICENSE','universal.txt')]:shutil.copy2(source,pkg/'licenses'/name)
+shared=['-dynamiclib'] if sys.platform=='darwin' else ['-shared','-Wl,--no-undefined,-Bsymbolic,--exclude-libs,ALL']
+so=pkg/'mpc_pd_universal_loader.so'
+subprocess.run([*common,*map(str,sources),str(ROOT/'src/universal/vst2_wrap.c'),*libs,*shared,'-o',str(so)],check=True)
+run=['qemu-arm','-L','/usr/arm-linux-gnueabihf'] if a.mode=='armv7' else []
+for name in ['universal_engine_test','universal_manifest_test','universal_vst_test']:
+ test=ROOT/'tests'/(name+'.c')
+ if not test.exists():continue
+ extra=[*map(str,sources),*libs] if name=='universal_engine_test' else [str(ROOT/'src/universal/manifest.c'),'-lm'] if name=='universal_manifest_test' else ([] if sys.platform=='darwin' else ['-ldl'])+['-lm','-lpthread']
+ binary=out/name
+ subprocess.run([*common,'-DUL_TESTING',str(test),*extra,'-o',str(binary)],check=True)
+ arg=str(so) if name=='universal_vst_test' else str(pkg/'data')
+ subprocess.run([*run,str(binary),arg],check=True)
+if a.mode=='armv7':subprocess.run([sys.executable,str(ROOT/'scripts/verify_elf.py'),str(so)],check=True)
+print('PASS Universal '+a.mode+suffix+' build; '+str(so))

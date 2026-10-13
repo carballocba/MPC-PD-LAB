@@ -1,0 +1,35 @@
+[
+  {
+    "key": "patch",
+    "name": "Patch",
+    "min": 0,
+    "max": 1,
+    "default": 0,
+    "options": [
+      "A",
+      "B"
+    ]
+  },
+  {
+    "key": "apply",
+    "name": "Apply",
+    "min": 0,
+    "max": 1,
+    "default": 0,
+    "momentary": true
+  },
+  {
+    "key": "gain",
+    "name": "Gain",
+    "min": 0,
+    "max": 1,
+    "default": 1
+  },
+  {
+    "key": "mix",
+    "name": "Mix",
+    "min": 0,
+    "max": 1,
+    "default": 1
+  }
+]

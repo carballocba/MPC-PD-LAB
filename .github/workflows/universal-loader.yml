@@ -1,0 +1,72 @@
+name: Universal Loader offline validation
+on:
+  push:
+    branches: [development/universal-loader-v0.1]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  native:
+    if: github.event_name != 'pull_request' || github.head_ref == 'development/universal-loader-v0.1'
+    runs-on: ubuntu-22.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - run: scripts/dependencies.sh
+      - name: Native Linux, repeated switching and concurrent publication
+        run: python3 scripts/build_universal.py native
+      - name: Address and undefined behavior sanitizers
+        run: UL_SWITCH_COUNT=100 python3 scripts/build_universal.py native --sanitizer address
+      - name: Thread sanitizer
+        run: |
+          sudo sysctl -w vm.mmap_rnd_bits=28
+          UL_SWITCH_COUNT=100 python3 scripts/build_universal.py native --sanitizer thread
+      - name: Audit shipped Vanilla patch closure
+        run: python3 scripts/audit_universal.py 'work/universal-native/package/CARBALLO - VST - MPC PD Universal Loader/data/user'
+      - name: Upstream Linux tests without executing installers
+        run: |
+          git clone https://github.com/sd88me/mpc-vst-plugins.git work/packaging-upstream
+          git -C work/packaging-upstream checkout --detach 5e3a96885b6de76a48b498821c379568a05cc006
+          python3 -W ignore::ResourceWarning work/packaging-upstream/tools/test_catalog.py RiskyCallsTest OsCompatTest CatalogTest TilePresetTest LayoutWarningTest BuildTest IssuesTest SiteTest PagesTest BuildYourselfTest AppResolveTest
+          python3 work/packaging-upstream/tools/test_skin_compat.py
+      - name: Existing Delay baseline
+        run: scripts/build.sh desktop
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: universal-native-validation
+          path: |
+            work/desktop/*report.txt
+            work/universal-native/package/**/licenses/*
+          retention-days: 14
+  armv7:
+    if: github.event_name != 'pull_request' || github.head_ref == 'development/universal-loader-v0.1'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - name: Pinned ARM baseline and QEMU checks
+        run: scripts/armv7.sh
+      - name: Universal ARM build and QEMU transaction tests
+        run: docker run --rm --network=none -u "$(id -u):$(id -g)" -v "$PWD:/project" -e UL_SWITCH_COUNT=100 mpc-pd-armv7:phase2 python3 scripts/build_universal.py armv7
+      - name: Package without running installers
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y binutils-arm-linux-gnueabihf
+          python3 -m pip install -r scripts/requirements-packaging.txt
+          git clone https://github.com/sd88me/mpc-vst-plugins.git work/packaging-upstream
+          git -C work/packaging-upstream checkout --detach 5e3a96885b6de76a48b498821c379568a05cc006
+          python3 scripts/package_universal.py --upstream work/packaging-upstream
+          python3 scripts/package_universal.py --upstream work/packaging-upstream --out work/universal-repeat
+          cmp work/universal-dist/*.zip work/universal-repeat/*.zip
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: universal-loader-armv7
+          path: |
+            work/universal-dist/*.zip
+            work/armv7/*report.txt
+            work/armv7/toolchain-packages.txt
+          retention-days: 14
