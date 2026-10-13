@@ -2,7 +2,7 @@ name: ARMv7 offline build
 on:
   pull_request:
   push:
-    branches: [main, 'phase2/**']
+    branches: [main, 'phase2/**', 'phase3/**']
   workflow_dispatch:
 permissions:
   contents: read
@@ -16,11 +16,21 @@ jobs:
         run: scripts/armv7.sh
       - name: Build and test desktop
         run: scripts/build.sh desktop
+      - name: Package and test Hakai release offline
+        run: |
+          python3 -m pip install -r scripts/requirements-packaging.txt
+          git clone https://github.com/sd88me/mpc-vst-plugins.git work/packaging-upstream
+          git -C work/packaging-upstream checkout --detach 5e3a96885b6de76a48b498821c379568a05cc006
+          python3 scripts/package_hakai.py --phase2-folder 'work/armv7/package/MPC-PD-LAB - VST - MPC PD Delay' --upstream work/packaging-upstream
+          python3 tests/test_hakai_package.py work/dist/MPC-PD-Delay-1.0.0-mpc-armv7.zip --upstream work/packaging-upstream
+          python3 scripts/package_hakai.py --phase2-folder 'work/armv7/package/MPC-PD-LAB - VST - MPC PD Delay' --upstream work/packaging-upstream --out work/repeat
+          cmp work/dist/MPC-PD-Delay-1.0.0-mpc-armv7.zip work/repeat/MPC-PD-Delay-1.0.0-mpc-armv7.zip
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: always()
         with:
           name: mpc-pd-delay-offline-validation
           path: |
+            work/dist/*.zip
             work/armv7/mpc-pd-delay-armv7.tar.gz
             work/armv7/*report.txt
             work/armv7/*build.log
