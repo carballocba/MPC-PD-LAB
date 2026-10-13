@@ -1,0 +1,15 @@
+#N canvas 80 80 760 520 12;
+#X obj 55 55 inlet~;
+#X obj 195 55 inlet~;
+#X obj 55 115 delwrite~ pd_lab_left 2000;
+#X obj 195 115 delwrite~ pd_lab_right 2000;
+#X obj 55 165 delread~ pd_lab_left 350;
+#X obj 195 165 delread~ pd_lab_right 350;
+#X obj 55 235 outlet~;
+#X obj 195 235 outlet~;
+#X text 52 18 MPC PD LAB - stereo fixed delay DSP smoke test;
+#X text 52 278 This is a simple Pd vanilla smoke test (not yet a feedback delay).;
+#X connect 0 0 2 0;
+#X connect 1 0 3 0;
+#X connect 4 0 6 0;
+#X connect 5 0 7 0;
