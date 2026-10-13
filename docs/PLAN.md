@@ -33,4 +33,6 @@ Test continuous operation and rapid parameter changes. Avoid blocking or synchro
 7. Select an Organelle patch and audit external dependencies.
 
 ## Current status
-Planning only. No plugin has been compiled or tested on the MPC yet.
+Desktop libpd adapter integration is verified with engine and hosted audio smoke tests
+at 44.1 kHz / 128 frames; see LIBPD_ADAPTER.md for results. ARMv7 packaging
+and hardware benchmarking are next. No plugin has been deployed or tested on the MPC.

@@ -1,0 +1,8 @@
+#N canvas 0 0 500 400 12;
+#X obj 40 40 adc~ 1 2;
+#X obj 40 100 stereo_delay_smoke;
+#X obj 40 160 dac~ 1 2;
+#X connect 0 0 1 0;
+#X connect 0 1 1 1;
+#X connect 1 0 2 0;
+#X connect 1 1 2 1;
