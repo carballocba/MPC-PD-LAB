@@ -1,0 +1,3 @@
+#N canvas 0 0 400 200 10;
+#X obj 20 20 mpc_organelle_mother;
+#X obj 20 70 upstream/main;

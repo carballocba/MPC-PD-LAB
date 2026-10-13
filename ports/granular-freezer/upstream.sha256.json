@@ -1,0 +1,7 @@
+{
+  "LICENSE.txt": "fd0724106ecb1bffeeecb4ab37c5d9b4671dc36fa0fa4d3cc3f1ae9f872f09a7",
+  "grain.pd": "6fe96a70514d5168006bd33662fcd76f1679013efbe1491e49e59ea46929f381",
+  "grainvoice.pd": "c304487bb1b037e5122c999bcc3eec44ab9e43fd2a20abc36764ca3b12b8796f",
+  "latch-notes.pd": "d2b0b7c5084f943ba3ba76c9bcec10e87615122dd2d979974d591e1e87eec56b",
+  "main.pd": "874e7d0c220782dbf71f296af15eeb47d234312d84e81ce251c20ccdfeb0ac85"
+}

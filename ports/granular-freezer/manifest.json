@@ -1,0 +1,26 @@
+{
+  "schema": 1,
+  "name": "Granular Freezer",
+  "author": "Critter & Guitari; crossfade adaptations credit Hans-Christoph Steiner (2004)",
+  "upstream": {"repo": "critterandguitari/Organelle_Patches", "revision": "72d19ed847ee40a89e6f40bcebce56229be1ef0b", "directory": "Effects/Granular Freezer"},
+  "license": "BSD-3-Clause AND GPL-2.0-or-later",
+  "entry": "upstream/main.pd",
+  "host": "host.pd",
+  "required_files": ["host.pd", "mpc_organelle_mother.pd", "upstream/main.pd", "upstream/grain.pd", "upstream/grainvoice.pd", "upstream/latch-notes.pd", "upstream/LICENSE.txt"],
+  "externals": [],
+  "abstractions": ["grain", "grainvoice", "latch-notes"],
+  "assets": [],
+  "audio": {"inputs": 2, "outputs": 2, "sample_rate": 44100, "wet_input": "original sums left and right into mono freezer; stereo random grains"},
+  "midi": {"notes": true, "cc": {"21": "knob1", "22": "knob2", "23": "knob3", "24": "knob4", "25": "freeze", "7": "vol"}, "expression_cc": 11, "footswitch_cc": 64},
+  "controls": [
+    {"key": "knob1", "name": "Grain Size", "receiver": "mpc-knob1", "mode": "continuous", "default": 0.2},
+    {"key": "knob2", "name": "Spread", "receiver": "mpc-knob2", "mode": "continuous", "default": 0.1},
+    {"key": "knob3", "name": "Density", "receiver": "mpc-knob3", "mode": "continuous", "default": 0.5},
+    {"key": "knob4", "name": "Wet Dry", "receiver": "mpc-knob4", "mode": "continuous", "default": 0.5},
+    {"key": "freeze", "name": "Freeze", "receiver": "mpc-aux", "mode": "toggle-edge", "default": 0},
+    {"key": "vol", "name": "Volume", "receiver": "mpc-vol", "mode": "continuous", "default": 1}
+  ],
+  "vst": {"uid": "CGFZ", "name": "Organelle Granular Freezer", "vendor": "CARBALLO", "so": "organelle_granular_freezer.so", "version": 1000},
+  "tier": "B",
+  "limits": ["one active instance per module", "44.1 kHz", "no OLED or Q-Link verification", "parameter-only state; no audio buffer/tail persistence", "ARMv7 MPC hardware untested"]
+}
