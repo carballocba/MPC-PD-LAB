@@ -12,8 +12,6 @@
 
 typedef struct {
     void *patch;
-    int16_t in[128 * 2];
-    int16_t out[128 * 2];
 } pd_instance;
 
 /* libpd initialization and patch lifecycle must be serialized if multiple
@@ -33,7 +31,9 @@ static void *pd_create(const char *data_dir) {
         snprintf(dir, sizeof dir, "%s", data_dir);
     else
         snprintf(dir, sizeof dir, ".");
-    void *patch = libpd_openfile("stereo_delay_smoke.pd", dir);
+    /* The delay is an abstraction with inlet~/outlet~ ports. The host patch
+     * connects those ports to libpd's input/output channels via adc~/dac~. */
+    void *patch = libpd_openfile("libpd_host.pd", dir);
     if (!patch) return NULL;
     pd_instance *s = calloc(1, sizeof *s);
     if (!s) { libpd_closefile(patch); return NULL; }
