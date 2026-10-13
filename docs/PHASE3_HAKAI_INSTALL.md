@@ -26,8 +26,14 @@ identify the supported desktop installer and release scripts.
 
 Hakai-source limitation: the historically referenced firmware repository
 [RedHate/Hakai-MPC](https://github.com/RedHate/Hakai-MPC) returned HTTP 404 on
-2026-10-13 and could not be cloned. No accessible 3.9.1 firmware/plugin-manager
-source has been established here. Consequently, the table verifies the sd88me
+2026-10-13 and could not be cloned. A surviving historical fork,
+[henning/Hakai-MPC at 0c7008c](https://github.com/henning/Hakai-MPC/tree/0c7008c7a5cd62cd2dc331e7b657bdcee19b4625),
+was inspected: its [README.md](https://github.com/henning/Hakai-MPC/blob/0c7008c7a5cd62cd2dc331e7b657bdcee19b4625/README.md)
+describes the older 2.9-era firmware, and
+[az01-launch-MPC](https://github.com/henning/Hakai-MPC/blob/0c7008c7a5cd62cd2dc331e7b657bdcee19b4625/az01-launch-MPC)
+mounts content/settings and launches MPC/Force. Neither implements VST discovery
+or a VST installer. Its complete tree contains no plugin-manager implementation.
+No accessible 3.9.1 firmware/plugin-manager source has been established here. Consequently, the table verifies the sd88me
 installation route, not a claimed independent audit of Hakai's discovery code.
 If a different Hakai manager is intended, obtain its exact source/version before
 using that route. Do not invent a native manager integration.
@@ -99,7 +105,11 @@ executed during preparation. Use your own device IP; verify its SSH fingerprint.
 Before installing, locate the actual `MPC.settings` on your unit. Upstream checks
 `/media/az01-internal/Settings/*/MPC.settings` and
 `/data/Settings/*/MPC.settings`. If neither matches, stop and identify the actual
-file; the shell installer accepts `MPC_SETTINGS` explicitly. With MPC stopped,
+file; the shell installer accepts `MPC_SETTINGS` explicitly. Also confirm which
+settings copy persists across restarts: the historical Hakai launcher can
+bind-mount a temporary settings copy. If your unit does that, this upstream
+installer's atomic rename/persistence may fail; stop rather than editing the
+launcher or inventing a persistence workaround. With MPC stopped,
 copy the **complete** settings file to your Mac with `scp`, retain a dated copy
 on the device, and back up the destination's `.mpc-store` if present. Record
 `SynthContentLocations`, the existing plugin-list entries, and service name.

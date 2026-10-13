@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """Run packaged upstream scripts against disposable local storage only."""
 import argparse
-import hashlib
 import json
 import os
 from pathlib import Path
