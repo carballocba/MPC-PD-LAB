@@ -2,7 +2,7 @@ name: ARMv7 offline build
 on:
   pull_request:
   push:
-    branches: [main, 'phase2/**', 'phase3/**']
+    branches: [main, 'phase2/**', 'phase3/**', 'phase4/**']
   workflow_dispatch:
 permissions:
   contents: read
@@ -25,12 +25,23 @@ jobs:
           python3 tests/test_hakai_package.py work/dist/MPC-PD-Delay-1.0.0-mpc-armv7.zip --upstream work/packaging-upstream
           python3 scripts/package_hakai.py --phase2-folder 'work/armv7/package/MPC-PD-LAB - VST - MPC PD Delay' --upstream work/packaging-upstream --out work/repeat
           cmp work/dist/MPC-PD-Delay-1.0.0-mpc-armv7.zip work/repeat/MPC-PD-Delay-1.0.0-mpc-armv7.zip
+      - name: Build and test authentic Organelle patch
+        run: |
+          python3 tests/test_organelle_audit.py
+          python3 scripts/build_organelle.py desktop > work/organelle-desktop.log 2>&1 || { cat work/organelle-desktop.log; exit 1; }
+          docker run --rm --network=none -u "$(id -u):$(id -g)" -v "$PWD:/project" mpc-pd-armv7:phase2 python3 scripts/build_organelle.py armv7 > work/organelle-armv7.log 2>&1 || { cat work/organelle-armv7.log; exit 1; }
+          python3 scripts/package_organelle.py --upstream work/packaging-upstream
+          python3 scripts/package_organelle.py --upstream work/packaging-upstream --out work/organelle-repeat
+          cmp work/organelle-dist/*.zip work/organelle-repeat/*.zip
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: always()
         with:
           name: mpc-pd-delay-offline-validation
           path: |
             work/dist/*.zip
+            work/organelle-dist/*.zip
+            work/organelle-*.log
+            work/organelle-armv7/organelle_granular_freezer.so
             work/armv7/mpc-pd-delay-armv7.tar.gz
             work/armv7/*report.txt
             work/armv7/*build.log
