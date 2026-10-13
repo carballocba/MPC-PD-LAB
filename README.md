@@ -13,3 +13,6 @@ scripts/armv7.sh
 ```
 
 This builds and tests locally; it never connects to or modifies MPC hardware.
+
+Phase 3: see [Hakai packaging and installation](docs/PHASE3_HAKAI_INSTALL.md).
+Hardware compatibility remains unverified; no hardware deployment is part of this work.
