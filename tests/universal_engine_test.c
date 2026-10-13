@@ -21,6 +21,20 @@ static void block(ul_engine *s){ul_rt_enter();ul_process(s,in,out,128);ul_rt_lea
 static void block(ul_engine *s){ul_process(s,in,out,128);}
 #endif
 static int ready(ul_engine *s,unsigned slot){for(int i=0;i<4000;i++){block(s);if(ul_active_slot(s)==slot&&ul_test_phase(s)==1&&!ul_test_pending(s))return 1;sleep_ms();}return 0;}
+static void spectral(ul_engine *s){
+    const double frequencies[]={500,8000},mixes[]={0,0.5,1};
+    for(unsigned f=0;f<2;f++)for(unsigned m=0;m<3;m++){
+        ul_set(s,2,0.5f);ul_set(s,3,(float)mixes[m]);double energy_in=0,energy_out=0,w=2*3.141592653589793*frequencies[f]/44100;
+        for(int b=0;b<120;b++){for(int k=0;k<128;k++){in[2*k]=(int16_t)(10000*sin((b*128+k)*w));in[2*k+1]=0;}block(s);
+            if(b>=20)for(int k=0;k<128;k++){energy_in+=(double)in[2*k]*in[2*k];energy_out+=(double)out[2*k]*out[2*k];CHECK(out[2*k+1]==0);}}
+        double a=1200*(2*3.14159)/44100,den=1-2*(1-a)*cos(w)+(1-a)*(1-a);
+        double real=a*(1-(1-a)*cos(w))/den,imag=-a*(1-a)*sin(w)/den;
+        double expected=0.5*hypot(1-mixes[m]+mixes[m]*real,mixes[m]*imag);
+        CHECK(fabs(sqrt(energy_out/energy_in)-expected)<0.006);
+    }
+    ul_set(s,2,0);for(int i=0;i<20;i++)block(s);for(int k=0;k<256;k++)CHECK(out[k]==0);
+    ul_set(s,2,1);ul_set(s,3,1);for(int k=0;k<256;k++)in[k]=8000;
+}
 static void apply(ul_engine *s,unsigned slot){ul_set(s,0,(float)slot);ul_set(s,1,0);ul_set(s,1,1);ul_set(s,1,1);}
 static void copy(const char *a,const char *b){FILE *i=fopen(a,"rb"),*o=fopen(b,"wb");assert(i&&o);char buf[4096];size_t n;while((n=fread(buf,1,sizeof buf,i)))assert(fwrite(buf,1,n,o)==n);assert(!fclose(i));assert(!fclose(o));}
 static void path(char *out,const char *root,const char *sub){assert(snprintf(out,1024,"%s/%s",root,sub)<1024);}
@@ -42,7 +56,7 @@ int main(int argc,char **argv){assert(argc==2);char root[]="/tmp/ul-engine-XXXXX
     ul_set(s,2,NAN);CHECK(ul_get(s,2)==0.5f);ul_set(s,2,1);ul_set(s,3,1);
     ul_transport(s,1,1);apply(s,1);for(int i=0;i<30;i++){block(s);sleep_ms();}CHECK(ul_active_slot(s)==0&&ul_test_phase(s)==1);
     ul_transport(s,0,0);for(int i=0;i<10;i++){block(s);sleep_ms();}CHECK(ul_active_slot(s)==0);
-    ul_transport(s,1,0);CHECK(ready(s,1));CHECK(ul_test_pd_overlap(s)==0);
+    ul_transport(s,1,0);CHECK(ready(s,1));CHECK(ul_test_pd_overlap(s)==0);spectral(s);
     char saved[256];int saved_n=ul_save(s,saved,sizeof saved);CHECK(saved_n>0&&strstr(saved,"stereo-lowpass"));
     apply(s,0);CHECK(ready(s,0));CHECK(ul_restore(s,saved,(size_t)saved_n));CHECK(ready(s,1));
     CHECK(!ul_restore(s,"UL1 x 1 7fc00000 3f800000",sizeof "UL1 x 1 7fc00000 3f800000"));CHECK(!ul_restore(s,"bad",4));

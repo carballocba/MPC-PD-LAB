@@ -74,9 +74,10 @@ static int read_document(const char *path,document *d) {
     for(size_t k=(size_t)d->tokens[0].end;k<n;k++)if(!isspace((unsigned char)d->text[k]))return 0;
     return 1;
 }
+static int ascii_alnum(unsigned char c){return (c>='a'&&c<='z')||(c>='A'&&c<='Z')||(c>='0'&&c<='9');}
 int ul_identifier(const char *s,size_t max) {
     size_t n=strnlen(s,max);if(!n||n>=max)return 0;
-    for(size_t k=0;k<n;k++)if(!(isalnum((unsigned char)s[k])||s[k]=='-'||s[k]=='_'))return 0;
+    for(size_t k=0;k<n;k++)if(!(ascii_alnum((unsigned char)s[k])||s[k]=='-'||s[k]=='_'))return 0;
     return 1;
 }
 int ul_relative(const char *s) {
@@ -84,7 +85,7 @@ int ul_relative(const char *s) {
     const char *p=s;
     while(*p){const char *q=strchr(p,'/');size_t n=q?(size_t)(q-p):strlen(p);
         if(!n || (n==1&&p[0]=='.') || (n==2&&p[0]=='.'&&p[1]=='.'))return 0;
-        for(size_t k=0;k<n;k++)if(!(isalnum((unsigned char)p[k])||p[k]=='-'||p[k]=='_'||p[k]=='.'))return 0;
+        for(size_t k=0;k<n;k++)if(!(ascii_alnum((unsigned char)p[k])||p[k]=='-'||p[k]=='_'||p[k]=='.'))return 0;
         if(!q)break;p=q+1;if(!*p)return 0;
     }return 1;
 }
