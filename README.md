@@ -15,7 +15,7 @@ scripts/armv7.sh
 This builds and tests locally; it never connects to or modifies MPC hardware.
 
 Phase 3: see [Hakai packaging and installation](docs/PHASE3_HAKAI_INSTALL.md).
-Hardware compatibility remains unverified; no hardware deployment is part of this work.
+Phase 3 validation records predate the user's successful Delay test; see Phase 4 for the current evidence.
 
 Phase 4: [source audit](docs/PHASE4_SOURCE_AUDIT.md), [Organelle portability architecture](docs/PHASE4_PORTABILITY.md), and [separate Granular Freezer installation](docs/PHASE4_INSTALL.md).
 The user reports successful Delay loading/audio on MPC One/Hakai 3.9.1; Granular Freezer hardware testing remains pending.
