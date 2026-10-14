@@ -1,15 +1,15 @@
-name: Universal Loader offline validation
+name: Universal Loader GUI v0.2 offline validation
 on:
   push:
-    branches: [development/universal-loader-v0.1]
+    branches: [development/universal-loader-gui-v0.2]
   pull_request:
-    branches: [main]
+    branches: [main, development/universal-loader-v0.1]
   workflow_dispatch:
 permissions:
   contents: read
 jobs:
   native:
-    if: github.event_name != 'pull_request' || github.head_ref == 'development/universal-loader-v0.1'
+    if: github.event_name != 'pull_request' || github.head_ref == 'development/universal-loader-gui-v0.2'
     runs-on: ubuntu-22.04
     timeout-minutes: 25
     steps:
@@ -24,13 +24,18 @@ jobs:
           sudo sysctl -w vm.mmap_rnd_bits=28
           UL_SWITCH_COUNT=100 python3 scripts/build_universal.py native --sanitizer thread
       - name: Audit shipped Vanilla patch closure
-        run: python3 scripts/audit_universal.py 'work/universal-native/package/CARBALLO - VST - MPC PD Universal Loader/data/user'
+        run: python3 scripts/audit_universal.py 'work/universal-gui-native/package/CARBALLO - VST - MPC PD Universal Loader/data/user'
       - name: Upstream Linux tests without executing installers
         run: |
           git clone https://github.com/sd88me/mpc-vst-plugins.git work/packaging-upstream
           git -C work/packaging-upstream checkout --detach 5e3a96885b6de76a48b498821c379568a05cc006
           python3 -W ignore::ResourceWarning work/packaging-upstream/tools/test_catalog.py RiskyCallsTest OsCompatTest CatalogTest TilePresetTest LayoutWarningTest BuildTest IssuesTest SiteTest PagesTest BuildYourselfTest AppResolveTest
           python3 work/packaging-upstream/tools/test_skin_compat.py
+      - name: Native skin and touch mapping validation
+        run: |
+          python3 -m pip install -r scripts/requirements-gui.txt
+          python3 scripts/build_universal_gui.py --upstream work/packaging-upstream
+          python3 tests/test_universal_gui.py --upstream work/packaging-upstream --skin 'work/universal-gui-skin/CARBALLO - VST - MPC PD Universal Loader/Plugin Skins'
       - name: Existing Delay baseline
         run: scripts/build.sh desktop
       - name: Unchanged Freezer reference and native coexistence
@@ -42,18 +47,19 @@ jobs:
           ln -s "$PWD/work/desktop" work/freezer-reference/work/desktop
           python3 work/freezer-reference/scripts/build_organelle.py desktop
           cc -std=gnu11 -O2 -Wall -Wextra -Werror tests/universal_coexist_test.c -ldl -lm -o work/universal-coexist-test
-          work/universal-coexist-test 'work/universal-native/package/CARBALLO - VST - MPC PD Universal Loader/mpc_pd_universal_loader.so' 'work/desktop/package/MPC-PD-LAB - VST - MPC PD Delay/mpc_pd_delay.so' work/freezer-reference/work/organelle-desktop/organelle_granular_freezer.so
+          work/universal-coexist-test 'work/universal-gui-native/package/CARBALLO - VST - MPC PD Universal Loader/mpc_pd_universal_loader.so' 'work/desktop/package/MPC-PD-LAB - VST - MPC PD Delay/mpc_pd_delay.so' work/freezer-reference/work/organelle-desktop/organelle_granular_freezer.so
           test -z "$(git -C work/freezer-reference status --porcelain --untracked-files=no)"
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: always()
         with:
-          name: universal-native-validation
+          name: universal-gui-native-validation
           path: |
+            work/universal-gui-skin/native-assets-*.png
             work/desktop/*report.txt
-            work/universal-native/package/**/licenses/*
+            work/universal-gui-native/package/**/licenses/*
           retention-days: 14
   armv7:
-    if: github.event_name != 'pull_request' || github.head_ref == 'development/universal-loader-v0.1'
+    if: github.event_name != 'pull_request' || github.head_ref == 'development/universal-loader-gui-v0.2'
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     steps:
@@ -66,18 +72,19 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y binutils-arm-linux-gnueabihf
-          python3 -m pip install -r scripts/requirements-packaging.txt
+          python3 -m pip install -r scripts/requirements-packaging.txt -r scripts/requirements-gui.txt
           git clone https://github.com/sd88me/mpc-vst-plugins.git work/packaging-upstream
           git -C work/packaging-upstream checkout --detach 5e3a96885b6de76a48b498821c379568a05cc006
           python3 scripts/package_universal.py --upstream work/packaging-upstream
-          python3 scripts/package_universal.py --upstream work/packaging-upstream --out work/universal-repeat
-          cmp work/universal-dist/*.zip work/universal-repeat/*.zip
+          python3 scripts/package_universal.py --upstream work/packaging-upstream --out work/universal-gui-repeat
+          cmp work/universal-gui-dist/*.zip work/universal-gui-repeat/*.zip
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: always()
         with:
-          name: universal-loader-armv7
+          name: universal-loader-gui-v0.2-armv7
           path: |
-            work/universal-dist/*.zip
+            work/universal-gui-dist/*.zip
+            work/universal-gui-dist/*.png
             work/armv7/*report.txt
             work/armv7/toolchain-packages.txt
           retention-days: 14
