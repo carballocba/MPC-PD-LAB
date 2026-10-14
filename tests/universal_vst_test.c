@@ -40,4 +40,6 @@ int main(int argc,char**argv){CHECK(argc==2);void *lib=dlopen(argv[1],RTLD_NOW|R
  e->dispatcher(e,10,0,0,NULL,44100);left[0]=NAN;left[1]=INFINITY;tick(e);CHECK(ol[0]==0&&ol[1]==0);
  memset(ol,1,sizeof ol);e->processReplacing(e,in,out,64);for(int i=0;i<64;i++)CHECK(ol[i]==0&&or_[i]==0);e->dispatcher(e,11,0,128,NULL,0);
  e->dispatcher(e,12,0,0,NULL,0);e->dispatcher(e,1,0,0,NULL,0);e=entry(master);CHECK(e);CHECK(e->dispatcher(e,24,0,n,saved,0));e->dispatcher(e,12,0,1,NULL,0);CHECK(wait_patch(e,"stereo-trim"));e->dispatcher(e,1,0,0,NULL,0);dlclose(lib);
+ /* Linux NODELETE retains Pd class/symbol globals across host DSO unload/reload. */
+ lib=dlopen(argv[1],RTLD_NOW|RTLD_LOCAL);CHECK(lib);symbol=dlsym(lib,"VSTPluginMain");memcpy(&entry,&symbol,sizeof entry);e=entry(master);CHECK(e);CHECK(e->dispatcher(e,24,0,n,saved,0));CHECK(wait_patch(e,"stereo-trim"));e->dispatcher(e,1,0,0,NULL,0);dlclose(lib);
  puts("PASS VST ABI/effect identity, four Q-Links, transport, exact control/project recall, singleton, invalid input/config and reopen");return 0;}

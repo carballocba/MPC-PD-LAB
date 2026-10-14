@@ -90,3 +90,15 @@ after its members. This worker-side lifetime repair does not change DSP and is
 recorded in the redistributed patch; legacy dependencies remain untouched.
 Leak detection stays enabled. The callback audit also interposes read/write/close
 and nanosleep, alongside allocation, open/fopen, locks and join.
+
+## Module lifetime
+
+After the per-switch leak was fixed, engine LSan passed. VST DSO dlclose exposed
+303,483 bytes of Pd class/symbol/process globals: libpd has no supported full
+teardown of its default single instance. Linux/ARM Loader therefore links with
+ELF NODELETE, retaining one initialized private module until host-process exit.
+Close still joins the worker, closes graphs and frees Loader resources. A host
+dlclose/reopen test verifies reuse. This fixes repeated unload/reload abandoning
+Pd globals without suppressing LSan or trying unsupported global teardown.
+The tradeoff is resident module/class memory for the MPC application lifetime;
+restarting the application reclaims it. macOS is a development-only host.

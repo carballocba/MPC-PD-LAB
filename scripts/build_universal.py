@@ -47,7 +47,7 @@ if pkg.exists():shutil.rmtree(pkg)
 for folder in ['trim','lowpass']:shutil.copytree(ROOT/'patches/universal'/folder,pkg/'data/user/patches'/folder)
 for target in ['user','defaults']:shutil.copy2(ROOT/'patches/universal/catalog.json',pkg/'data'/target/'catalog.json')
 for source,name in [(deps/'libpd/LICENSE.txt','libpd.txt'),(deps/'libpd/pure-data/LICENSE.txt','pure-data.txt'),(deps/'mpc-vst-plugins/LICENSE','wrapper.txt'),(ROOT/'vendor/universal/LICENSE','jsmn.txt'),(ROOT/'src/universal/LICENSE','universal.txt'),(ROOT/'vendor/universal/pd-no-threads.patch','pd-no-threads.patch')]:shutil.copy2(source,pkg/'licenses'/name)
-shared=['-dynamiclib'] if sys.platform=='darwin' else ['-shared','-Wl,--no-undefined,-Bsymbolic,--exclude-libs,ALL']
+shared=['-dynamiclib'] if sys.platform=='darwin' else ['-shared','-Wl,--no-undefined,-Bsymbolic,--exclude-libs,ALL,-z,nodelete']
 so=pkg/'mpc_pd_universal_loader.so'
 link=[*common,*map(str,sources),str(ROOT/'src/universal/vst2_wrap.c'),*libs,*shared,'-o',str(so)]
 subprocess.run(link,check=True)

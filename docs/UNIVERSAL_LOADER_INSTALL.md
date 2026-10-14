@@ -64,7 +64,9 @@ reviewed by the operator: this subset is not a security sandbox. Never load
 untrusted patches or externals. Keep IDs/revisions stable for project recall;
 changed content requires a new revision. Unknown IDs/revisions fail safely rather
 than silently substituting another patch. No automatic migration or saved DSP
-buffer restoration is provided. A singleton permits one Loader instance per
+buffer restoration is provided. Linux retains the initialized Loader module until the MPC application exits;
+closing an effect frees its graph/worker but does not unload Pd class memory.
+A singleton permits one Loader instance per
 loaded module; multi-instance project usage is unsupported in v0.1.
 
 ## Failure and rollback
