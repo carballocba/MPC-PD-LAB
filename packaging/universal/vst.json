@@ -1,0 +1,15 @@
+{
+  "name": "MPC PD Universal Loader",
+  "vendor": "CARBALLO",
+  "uid": "MPUL",
+  "version": 100,
+  "so": "mpc_pd_universal_loader.so",
+  "effect": true,
+  "targets": [
+    "armv7"
+  ],
+  "params": "params.json",
+  "custom_skin": true,
+  "cc": false,
+  "nrpn": false
+}

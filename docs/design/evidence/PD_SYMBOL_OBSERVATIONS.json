@@ -1,0 +1,144 @@
+[
+  {
+    "file": "phase4-final-ci/organelle-armv7/organelle_granular_freezer.so",
+    "sha256": "9e736bbb51464e5af7ed15084772839df285248066281b7e00351a573fbff24d",
+    "elf32_arm": true,
+    "exports": [
+      "VSTPluginMain"
+    ],
+    "pd_symbols_in_full_symtab": [
+      {
+        "name": "s_list",
+        "binding": 0,
+        "visibility": 0,
+        "defined": true
+      },
+      {
+        "name": "gensym",
+        "binding": 0,
+        "visibility": 0,
+        "defined": true
+      },
+      {
+        "name": "sys_lock",
+        "binding": 0,
+        "visibility": 0,
+        "defined": true
+      },
+      {
+        "name": "pd_new",
+        "binding": 0,
+        "visibility": 0,
+        "defined": true
+      },
+      {
+        "name": "class_new",
+        "binding": 0,
+        "visibility": 0,
+        "defined": true
+      }
+    ],
+    "pd_undefined_imports": []
+  },
+  {
+    "file": "add-downloads/play-source/PLAY/CZ/lib/jam.pd_linux",
+    "sha256": "f1ebc93e98a3cfd02b328c3b1d8b3da050bfa3ca8a83f412d5ecc51e0fbd2c20",
+    "elf32_arm": true,
+    "exports": {
+      "count": 155,
+      "examples": [
+        "lua_closeslot",
+        "luaL_tolstring",
+        "lua_pushfstring",
+        "lua_getfield",
+        "lua_pushvfstring",
+        "lua_setiuservalue",
+        "lua_toclose",
+        "luaL_pushresult",
+        "luaopen_io",
+        "lua_xmove",
+        "lua_pushthread",
+        "luaL_addlstring"
+      ]
+    },
+    "pd_symbols_in_full_symtab": [
+      {
+        "name": "s_list",
+        "binding": 1,
+        "visibility": 0,
+        "defined": false
+      },
+      {
+        "name": "gensym",
+        "binding": 1,
+        "visibility": 0,
+        "defined": false
+      },
+      {
+        "name": "pd_new",
+        "binding": 1,
+        "visibility": 0,
+        "defined": false
+      },
+      {
+        "name": "class_new",
+        "binding": 1,
+        "visibility": 0,
+        "defined": false
+      }
+    ],
+    "pd_undefined_imports": [
+      "class_new",
+      "gensym",
+      "pd_new",
+      "s_list"
+    ]
+  },
+  {
+    "file": "add-downloads/play-source/PLAY/CZ/lib/fsynth~.pd_linux",
+    "sha256": "3a04ded915f61999011b36cee2e1faeb8fcbcbcbd0dac01c9c7f65b72de2d359",
+    "elf32_arm": true,
+    "exports": {
+      "count": 53,
+      "examples": [
+        "_ZN4PdUI12addSoundfileEPKcS1_PP9Soundfile",
+        "_ZTS6UIRealIfE",
+        "_ZN4PdUID0Ev",
+        "_ZN7MY_Meta7declareEPKcS1_",
+        "_ZTI2UI",
+        "_ZN4PdUIC2EPKcS1_",
+        "_ZN6fsynth13instanceClearEv",
+        "_ZN6UIRealIfE16sizeOfFAUSTFLOATEv",
+        "_ZN4PdUI9addButtonEPKcPf",
+        "_ZN6fsynth4initEi",
+        "_ZN6fsynthD1Ev",
+        "_ZN4PdUI17addVerticalSliderEPKcPfffff"
+      ]
+    },
+    "pd_symbols_in_full_symtab": [
+      {
+        "name": "pd_new",
+        "binding": 1,
+        "visibility": 0,
+        "defined": false
+      },
+      {
+        "name": "class_new",
+        "binding": 1,
+        "visibility": 0,
+        "defined": false
+      },
+      {
+        "name": "gensym",
+        "binding": 1,
+        "visibility": 0,
+        "defined": false
+      }
+    ],
+    "pd_undefined_imports": [
+      "class_new",
+      "gensym",
+      "pd_new"
+    ]
+  }
+]
