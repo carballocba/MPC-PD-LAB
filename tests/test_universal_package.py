@@ -17,7 +17,7 @@ with zipfile.ZipFile(a.zip) as z:
  plugin=ET.fromstring(z.read(base+'plugin-meta.xml'))
  for k,v in {'uid':'4d50554c','isInstrument':'0','category':'Effect','numInputs':'2','numOutputs':'2','manufacturer':'CARBALLO'}.items():assert plugin.get(k)==v,(k,plugin.get(k))
  assert plugin.get('file')=='%payload-path%/CARBALLO - VST - MPC PD Universal Loader/mpc_pd_universal_loader.so'
- assert json.loads(z.read(base+'Plugin Skins/TUI.json'))['pageData']['tabs']==[]
+ assert json.loads(z.read(base+'Plugin Skins/TUI.json'))['pageData']['tabs'], 'GUI must have real native tabs'
  q=json.loads(z.read(base+'Plugin Skins/Q-Links.json'))['Program Mode Q-Links']
  assert sorted(v for v in q.values() if v>=0)==[0,1,2,3]
  for i in range(4):assert q['Q-Link '+str(shadow_skin.qlink_for_slot(i))]==i

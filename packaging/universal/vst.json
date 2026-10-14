@@ -2,7 +2,7 @@
   "name": "MPC PD Universal Loader",
   "vendor": "CARBALLO",
   "uid": "MPUL",
-  "version": 100,
+  "version": 200,
   "so": "mpc_pd_universal_loader.so",
   "effect": true,
   "targets": [

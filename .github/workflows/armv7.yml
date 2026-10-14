@@ -9,7 +9,7 @@ permissions:
 jobs:
   build:
     # Universal CI deliberately does not execute installer fixtures.
-    if: github.head_ref != 'development/universal-loader-v0.1'
+    if: ${{ !startsWith(github.head_ref, 'development/universal-loader') }}
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     steps:

@@ -36,8 +36,26 @@ typedef struct { double samplePos,sampleRate,nanoSeconds,ppqPos,tempo,barStartPo
 typedef struct { AEffect fx;master_fn master;ul_engine *engine;atomic_uint rate,block;char chunk[256]; } wrap;
 static void text(void *p,const char *s,size_t n){if(p&&n){size_t used=0;while(used+1<n&&s[used])++used;memcpy(p,s,used);((char*)p)[used]=0;}}
 static uint32_t bits(float x){uint32_t n;memcpy(&n,&x,4);return n;}
+/* UI-only additions; engine and the first four parameter meanings are unchanged.
+ * Text stays within the VST2 eight-byte buffer. Native MPC Label Value polls it.
+ */
+static float gui_value(ul_engine *s,unsigned index){return index==5?ul_status(s)/10.0f:ul_active_slot(s)/2.0f;}
+static void gui_text(ul_engine *s,unsigned index,char out[8]){
+    static const char *states[]={"INIT","READY","WAIT","LOAD","BUSY","MISSING","INVALID","BAD OBJ","CONFIG","ROLLERR","CANCEL"};
+    char chunk[256],id[64]={0},rev[32]={0};int n=ul_save(s,chunk,sizeof chunk);
+    if(n>0&&!strncmp(chunk,"UL1 ",4)){
+        const char *begin=chunk+4,*end=strchr(begin,' ');
+        if(end&&(size_t)(end-begin)<sizeof id){memcpy(id,begin,(size_t)(end-begin));begin=end+1;end=strchr(begin,' ');
+            if(end&&(size_t)(end-begin)<sizeof rev)memcpy(rev,begin,(size_t)(end-begin));}
+    }
+    if(index==4)text(out,!strcmp(id,"stereo-trim")?"Trim":!strcmp(id,"stereo-lowpass")?"Lowpass":*id?"OTHER":"--",8);
+    else if(index==5){unsigned v=ul_status(s);text(out,v<=UL_CANCELLED?states[v]:"INVALID",8);}
+    else if(index==6){text(out,*id?id:"--",8);}
+    else if(index==7){text(out,strlen(id)>14?"LONG ID":strlen(id)>7?id+7:"",8);}
+    else text(out,strlen(rev)>7?"LONGREV":*rev?rev:"--",8);
+}
 static void set_parameter(AEffect *fx,int32_t i,float v){if(i>=0&&i<4)ul_set(((wrap*)fx->object)->engine,(unsigned)i,v);}
-static float get_parameter(AEffect *fx,int32_t i){return i>=0&&i<4?ul_get(((wrap*)fx->object)->engine,(unsigned)i):0;}
+static float get_parameter(AEffect *fx,int32_t i){wrap *w=fx->object;return i>=0&&i<4?ul_get(w->engine,(unsigned)i):i>=4&&i<9?gui_value(w->engine,(unsigned)i):0;}
 static int16_t f2s(float x){if(!isfinite(x))return 0;if(x>1)x=1;if(x< -1)x= -1;return (int16_t)(x*32767.0f);}
 static void run(AEffect *fx,float **in,float **out,int32_t n,int add) {
     if(n<=0||!out||!out[0]||!out[1])return;
@@ -54,7 +72,7 @@ static void run(AEffect *fx,float **in,float **out,int32_t n,int add) {
 static void replacing(AEffect *fx,float **in,float **out,int32_t n){run(fx,in,out,n,0);}
 static void accumulating(AEffect *fx,float **in,float **out,int32_t n){run(fx,in,out,n,1);}
 static intptr_t dispatch(AEffect *fx,int32_t op,int32_t index,intptr_t v,void *p,float opt) {
-    wrap *w=fx->object;static const char *names[]={"Patch","Apply","Gain","Mix"};
+    wrap *w=fx->object;static const char *names[]={"Patch","Apply","Gain","Mix","Active","Status","ID head","ID tail","Rev"};
     switch(op){
     case 0:return 1;
     case 1:ul_destroy(w->engine);free(w);return 1;
@@ -66,8 +84,9 @@ static intptr_t dispatch(AEffect *fx,int32_t op,int32_t index,intptr_t v,void *p
         if(index==0){char b[24];ul_display(w->engine,b,sizeof b);text(p,b,8);}
         else if(index==1)text(p,get_parameter(fx,1)>=0.5f?"Load":"Ready",8);
         else if(index==2||index==3){char b[24];unsigned z=(unsigned)(get_parameter(fx,index)*1000+0.5f);snprintf(b,sizeof b,"%u.%03u",z/1000,z%1000);text(p,b,8);}
+        else if(index>=4&&index<9){char b[8];gui_text(w->engine,(unsigned)index,b);text(p,b,8);}
         else return 0;return 1;
-    case 8:if(index<0||index>3)return 0;text(p,names[index],8);return 1;
+    case 8:if(index<0||index>8)return 0;text(p,names[index],8);return 1;
     case 10:atomic_store(&w->rate,bits(opt));ul_config(w->engine,opt==44100.0f&&atomic_load(&w->block)==128);return 1;
     case 11:atomic_store(&w->block,(unsigned)v);ul_config(w->engine,atomic_load(&w->rate)==bits(44100)&&v==128);return 1;
     case 12:ul_mains(w->engine,v!=0);return 1;
@@ -78,7 +97,7 @@ static intptr_t dispatch(AEffect *fx,int32_t op,int32_t index,intptr_t v,void *p
     case 35:return 1; /* kPlugCategEffect */
     case 45:case 48:text(p,"MPC PD Universal Loader",32);return 1;
     case 47:text(p,"CARBALLO",32);return 1;
-    case 49:return 100;
+    case 49:return 200;
     case 51:return p&&!strcmp(p,"receiveVstTimeInfo")?1:-1;
     case 58:return 2400;
     default:return 0;
@@ -96,7 +115,7 @@ __attribute__((visibility("default"))) AEffect *VSTPluginMain(master_fn master) 
     w->engine=ul_create(data);if(!w->engine){free(w);return NULL;}
     w->master=master;atomic_store(&w->rate,bits(44100));atomic_store(&w->block,128);
     AEffect *fx=&w->fx;fx->magic=0x56737450;fx->dispatcher=dispatch;fx->process=accumulating;
-    fx->setParameter=set_parameter;fx->getParameter=get_parameter;fx->numPrograms=1;fx->numParams=4;
-    fx->numInputs=fx->numOutputs=2;fx->flags=(1<<4)|(1<<5);fx->object=w;fx->uniqueID=0x4d50554c;fx->version=100;fx->processReplacing=replacing;
+    fx->setParameter=set_parameter;fx->getParameter=get_parameter;fx->numPrograms=1;fx->numParams=9;
+    fx->numInputs=fx->numOutputs=2;fx->flags=(1<<4)|(1<<5);fx->object=w;fx->uniqueID=0x4d50554c;fx->version=200;fx->processReplacing=replacing;
     return fx;
 }

@@ -31,5 +31,50 @@
     "min": 0,
     "max": 1,
     "default": 1
+  },
+  {
+    "key": "active",
+    "name": "Active",
+    "min": 0,
+    "max": 1,
+    "default": 0,
+    "type": "readout",
+    "display": "string"
+  },
+  {
+    "key": "status",
+    "name": "Status",
+    "min": 0,
+    "max": 1,
+    "default": 0,
+    "type": "readout",
+    "display": "string"
+  },
+  {
+    "key": "idhead",
+    "name": "ID head",
+    "min": 0,
+    "max": 1,
+    "default": 0,
+    "type": "readout",
+    "display": "string"
+  },
+  {
+    "key": "idtail",
+    "name": "ID tail",
+    "min": 0,
+    "max": 1,
+    "default": 0,
+    "type": "readout",
+    "display": "string"
+  },
+  {
+    "key": "revision",
+    "name": "Revision",
+    "min": 0,
+    "max": 1,
+    "default": 0,
+    "type": "readout",
+    "display": "string"
   }
 ]

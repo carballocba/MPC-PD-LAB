@@ -6,7 +6,7 @@ ROOT=Path(__file__).resolve().parents[1]
 p=argparse.ArgumentParser();p.add_argument('mode',choices=['native','armv7']);p.add_argument('--sanitizer',choices=['address','thread']);a=p.parse_args()
 if a.mode=='armv7' and a.sanitizer:sys.exit('Native sanitizers only; ARM/QEMU is a separate correctness run')
 deps=ROOT/'work/deps';subprocess.run([sys.executable,str(ROOT/'scripts/check_pins.py'),str(deps)],check=True)
-suffix='-'+a.sanitizer if a.sanitizer else '';out=ROOT/'work'/('universal-'+a.mode+suffix);out.mkdir(parents=True,exist_ok=True)
+suffix='-'+a.sanitizer if a.sanitizer else '';out=ROOT/'work'/('universal-gui-'+a.mode+suffix);out.mkdir(parents=True,exist_ok=True)
 cc='arm-linux-gnueabihf-gcc' if a.mode=='armv7' else os.environ.get('CC','cc')
 flags=['-DPDTHREADS=0','-D_FILE_OFFSET_BITS=64','-fPIC','-fvisibility=hidden']
 if a.mode=='armv7':flags+=['-march=armv7-a','-mfpu=vfpv3-d16','-mfloat-abi=hard']
@@ -55,7 +55,7 @@ if a.mode=='armv7':
  first=so.read_bytes();subprocess.run(link,check=True);assert so.read_bytes()==first,'Repeated ARM link differs'
  print('PASS repeated Universal ARM link byte-identical')
 run=['qemu-arm','-L','/usr/arm-linux-gnueabihf'] if a.mode=='armv7' else []
-for name in ['universal_engine_test','universal_manifest_test','universal_vst_test']:
+for name in ['universal_engine_test','universal_manifest_test','universal_vst_test','universal_gui_test']:
  test=ROOT/'tests'/(name+'.c')
  if not test.exists():continue
  extra=[*map(str,sources),*libs] if name=='universal_engine_test' else [str(ROOT/'src/universal/manifest.c'),'-lm'] if name=='universal_manifest_test' else ([] if sys.platform=='darwin' else ['-ldl'])+['-lm','-lpthread']
@@ -63,7 +63,7 @@ for name in ['universal_engine_test','universal_manifest_test','universal_vst_te
  if name=='universal_engine_test' and sys.platform!='darwin' and not a.sanitizer:
   extra += [str(ROOT/'tests/universal_rt_audit.c'),'-DUL_RT_AUDIT','-Wl,'+','.join('--wrap='+symbol for symbol in ['malloc','calloc','realloc','free','open','fopen','open64','fopen64','pthread_mutex_lock','pthread_join','read','write','close','nanosleep'])]
  subprocess.run([*common,'-DUL_TESTING',str(test),*extra,'-o',str(binary)],check=True)
- arg=str(so) if name=='universal_vst_test' else str(pkg/'data')
+ arg=str(so) if name in ('universal_vst_test','universal_gui_test') else str(pkg/'data')
  subprocess.run([*run,str(binary),arg],check=True)
 if a.mode=='armv7':subprocess.run([sys.executable,str(ROOT/'scripts/verify_elf.py'),str(so)],check=True)
 print('PASS Universal '+a.mode+suffix+' build; '+str(so))

@@ -1,0 +1,2 @@
+# Existing sd88me skin tooling dependency; build/preview only, never ARM runtime.
+Pillow==11.3.0
