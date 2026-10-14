@@ -21,4 +21,9 @@ int main(int argc,char **argv){CHECK(argc==2);void *lib=dlopen(argv[1],RTLD_NOW|
  e->setParameter(e,1,0);e->setParameter(e,1,1);CHECK(wait_patch(e,"stereo-trim"));CHECK(e->dispatcher(e,24,0,n,state,0));CHECK(wait_patch(e,"stereo-lowpass"));assert_text(e,4,"Lowpass");CHECK(e->getParameter(e,2)==0.42f&&e->getParameter(e,3)==0.25f);
  char file[1600],saved[1620];CHECK(strlen(argv[1])<1400);strcpy(file,argv[1]);char *slash=strrchr(file,'/');CHECK(slash);*slash=0;strcat(file,"/data/user/patches/trim/main.pd");snprintf(saved,sizeof saved,"%s.gui-test-saved",file);CHECK(!rename(file,saved));
  select_patch(e,0);for(int i=0;i<100;i++){tick(e);nap();}assert_text(e,5,"MISSING");assert_text(e,4,"Lowpass");CHECK(!rename(saved,file));select_patch(e,0);CHECK(wait_patch(e,"stereo-trim"));assert_text(e,5,"READY");
+ /* Invalid Pd activation rolls back; GUI must report the retained graph. */
+ select_patch(e,1);CHECK(wait_patch(e,"stereo-lowpass"));CHECK(!rename(file,saved));
+ FILE *original=fopen(saved,"rb"),*broken=fopen(file,"wb");CHECK(original&&broken);char bytes[4096];size_t count;while((count=fread(bytes,1,sizeof bytes,original)))CHECK(fwrite(bytes,1,count,broken)==count);fputs("#X connect 0 0 99 0;\n",broken);fclose(original);fclose(broken);
+ select_patch(e,0);for(int i=0;i<150;i++){tick(e);nap();}assert_text(e,5,"BAD OBJ");assert_text(e,4,"Lowpass");CHECK(!remove(file));CHECK(!rename(saved,file));select_patch(e,0);CHECK(wait_patch(e,"stereo-trim"));
+ e->dispatcher(e,10,0,0,NULL,48000);assert_text(e,5,"CONFIG");tick(e);CHECK(ol[100]==0);e->dispatcher(e,10,0,0,NULL,44100);select_patch(e,0);CHECK(wait_patch(e,"stereo-trim"));
  e->dispatcher(e,1,0,0,NULL,0);dlclose(lib);puts("PASS native GUI contract: selected/active split, readonly telemetry, Q-Link readback, Apply/rearm, transport, project recall and error recovery");return 0;}

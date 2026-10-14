@@ -8,13 +8,19 @@ review PR and ZIP PROVENANCE.json.
 Local development checks passed: existing engine/manifest/VST tests with 20
 switches, plus the native GUI VST contract (selection versus active, readonly
 writes ignored, held Apply/rearm, playing WAIT, stopped load, Gain/Mix readback,
-UL1 project recall, missing candidate and recovery). Native GUI generation and
+UL1 project recall, missing candidate, invalid activation rollback, configuration
+error and recovery). Native GUI generation and
 skin_check passed. Actual generated TUI/PNG tests cover 44px touch boxes, overlap,
 image validity, enum button IDs, Apply Toggle Switch actions, all nine parameter
 bindings, readonly fields and unchanged four Q-Link bindings. Preserved file
 hashes include the v0.1 engine and all 19 original main files.
 
-Required CI gates remain: Linux 1,000-switch/concurrency suite; ASan/UBSan/LSan,
+Complete CI passed on implementation baseline
+`d21b02a9caf26d87aebed51cb3075563f9de7d9e`:
+https://github.com/carballocba/MPC-PD-LAB/actions/runs/38523735563.
+Both native and ARMv7 jobs succeeded. Final test-only additions expand GUI error
+coverage to activation rollback/configuration; the final branch CI must also pass.
+The passing gates are: Linux 1,000-switch/concurrency suite; ASan/UBSan/LSan,
 TSan, callback interposition including large-file opens; native GUI contract;
 75 non-installer upstream catalog tests and 10 skin tests; unchanged Delay and
 Freezer individual/coexistence tests; ARM hard-float/QEMU GUI/engine tests and
