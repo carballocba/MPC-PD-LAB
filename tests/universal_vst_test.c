@@ -21,7 +21,13 @@ static void nap(void){struct timespec t={0,1000000};nanosleep(&t,NULL);}
 static int chunk(AEffect *e,char *b){void*p=NULL;int n=(int)e->dispatcher(e,23,0,0,&p,0);if(n>0&&n<=255)memcpy(b,p,(size_t)n);return n;}
 static int wait_patch(AEffect*e,const char *id){char b[256];for(int i=0;i<4000;i++){tick(e);int n=chunk(e,b);char state[24];e->dispatcher(e,7,0,0,state,0);if(n&&strstr(b,id)&&!strncmp(state,"READY",5)&&fabsf(ol[100])>0.01f)return 1;nap();}char display[24];e->dispatcher(e,7,0,0,display,0);fprintf(stderr,"WAIT failed %s chunk=%s display=%s output=%g\n",id,b,display,ol[100]);return 0;}
 static void select_patch(AEffect*e,int slot){e->setParameter(e,0,(float)slot);e->setParameter(e,1,0);e->setParameter(e,1,1);}
-int main(int argc,char**argv){CHECK(argc==2);void *lib=dlopen(argv[1],RTLD_NOW|RTLD_LOCAL);CHECK(lib);
+int main(int argc,char**argv){CHECK(argc==2);int load_flags=RTLD_NOW|RTLD_LOCAL;
+#ifdef __APPLE__
+ /* Development host mirrors the ELF module lifetime; dyld/ASan reload otherwise
+    registers the same image globals twice. Linux tests exercise the ELF flag. */
+ load_flags|=RTLD_NODELETE;
+#endif
+ void *lib=dlopen(argv[1],load_flags);CHECK(lib);
  AEffect*(*entry)(Master);void*symbol=dlsym(lib,"VSTPluginMain");memcpy(&entry,&symbol,sizeof entry);CHECK(entry);AEffect*e=entry(master);CHECK(e);CHECK(!entry(master));
  CHECK(e->magic==0x56737450&&e->uniqueID==0x4d50554c&&e->numParams==4&&e->numInputs==2&&e->numOutputs==2&&!(e->flags&(1<<8)));
  CHECK(e->dispatcher(e,35,0,0,NULL,0)==1);CHECK(!e->dispatcher(e,26,0,0,NULL,0)&&e->dispatcher(e,26,2,0,NULL,0));
@@ -41,5 +47,5 @@ int main(int argc,char**argv){CHECK(argc==2);void *lib=dlopen(argv[1],RTLD_NOW|R
  memset(ol,1,sizeof ol);e->processReplacing(e,in,out,64);for(int i=0;i<64;i++)CHECK(ol[i]==0&&or_[i]==0);e->dispatcher(e,11,0,128,NULL,0);
  e->dispatcher(e,12,0,0,NULL,0);e->dispatcher(e,1,0,0,NULL,0);e=entry(master);CHECK(e);CHECK(e->dispatcher(e,24,0,n,saved,0));e->dispatcher(e,12,0,1,NULL,0);CHECK(wait_patch(e,"stereo-trim"));e->dispatcher(e,1,0,0,NULL,0);dlclose(lib);
  /* Linux NODELETE retains Pd class/symbol globals across host DSO unload/reload. */
- lib=dlopen(argv[1],RTLD_NOW|RTLD_LOCAL);CHECK(lib);symbol=dlsym(lib,"VSTPluginMain");memcpy(&entry,&symbol,sizeof entry);e=entry(master);CHECK(e);CHECK(e->dispatcher(e,24,0,n,saved,0));CHECK(wait_patch(e,"stereo-trim"));e->dispatcher(e,1,0,0,NULL,0);dlclose(lib);
+ lib=dlopen(argv[1],load_flags);CHECK(lib);symbol=dlsym(lib,"VSTPluginMain");memcpy(&entry,&symbol,sizeof entry);e=entry(master);CHECK(e);CHECK(e->dispatcher(e,24,0,n,saved,0));CHECK(wait_patch(e,"stereo-trim"));e->dispatcher(e,1,0,0,NULL,0);dlclose(lib);
  puts("PASS VST ABI/effect identity, four Q-Links, transport, exact control/project recall, singleton, invalid input/config and reopen");return 0;}

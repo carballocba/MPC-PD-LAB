@@ -31,7 +31,7 @@ with tempfile.TemporaryDirectory() as temp:
  assert script.count(anchor)==1;guard=(ROOT/'packaging/universal/fresh_install_guard.sh').read_bytes()
  files[top+'install.sh']=(script.replace(anchor,guard+b'\n'+anchor),mode)
  files[top+'INSTALL.md']=((ROOT/'docs/UNIVERSAL_LOADER_INSTALL.md').read_bytes(),0o100644<<16)
- provenance={'plugin_uid':'MPUL','hardware_tested':False,'binary_sha256':hashlib.sha256(so.read_bytes()).hexdigest(),'source_commit':subprocess.check_output(['git','-C',str(ROOT),'rev-parse','HEAD'],text=True).strip(),'libpd':'ba0dc63262901d658af8bbda5e619a60fa975e78','pd':'f009fd8d7b537e209e09898d487fdf1bf547da2b','runtime_wrapper_base':'208745830fc2ed90b2fd0dc480ef5c554284292f','packaging_tools':PIN,'jsmn':'25647e692c7906b96ffd2b05ca54c097948e879c'}
+ provenance={'plugin_uid':'MPUL','hardware_tested':False,'binary_sha256':hashlib.sha256(so.read_bytes()).hexdigest(),'source_commit':subprocess.check_output(['git','-C',str(ROOT),'rev-parse','HEAD'],text=True).strip(),'libpd':'ba0dc63262901d658af8bbda5e619a60fa975e78','pd':'f009fd8d7b537e209e09898d487fdf1bf547da2b','runtime_wrapper_base':'208745830fc2ed90b2fd0dc480ef5c554284292f','packaging_tools':PIN,'jsmn':'25647e692c7906b96ffd2b05ca54c097948e879c','pd_threads':0,'elf_nodelete':True,'pd_local_patch_sha256':hashlib.sha256((ROOT/'vendor/universal/pd-no-threads.patch').read_bytes()).hexdigest()}
  files[top+'PROVENANCE.json']=((json.dumps(provenance,indent=2)+'\n').encode(),0o100644<<16)
  for rel in ['mpc-plugin.json','portable/'+folder+'/mpc-plugin.json']:
   data,mode=files[top+rel];m=json.loads(data);m['os_compat']=['3.x'];files[top+rel]=((json.dumps(m,indent=2)+'\n').encode(),mode)

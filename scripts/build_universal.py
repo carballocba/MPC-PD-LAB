@@ -61,7 +61,7 @@ for name in ['universal_engine_test','universal_manifest_test','universal_vst_te
  extra=[*map(str,sources),*libs] if name=='universal_engine_test' else [str(ROOT/'src/universal/manifest.c'),'-lm'] if name=='universal_manifest_test' else ([] if sys.platform=='darwin' else ['-ldl'])+['-lm','-lpthread']
  binary=out/name
  if name=='universal_engine_test' and sys.platform!='darwin' and not a.sanitizer:
-  extra += [str(ROOT/'tests/universal_rt_audit.c'),'-DUL_RT_AUDIT','-Wl,'+','.join('--wrap='+symbol for symbol in ['malloc','calloc','realloc','free','open','fopen','pthread_mutex_lock','pthread_join','read','write','close','nanosleep'])]
+  extra += [str(ROOT/'tests/universal_rt_audit.c'),'-DUL_RT_AUDIT','-Wl,'+','.join('--wrap='+symbol for symbol in ['malloc','calloc','realloc','free','open','fopen','open64','fopen64','pthread_mutex_lock','pthread_join','read','write','close','nanosleep'])]
  subprocess.run([*common,'-DUL_TESTING',str(test),*extra,'-o',str(binary)],check=True)
  arg=str(so) if name=='universal_vst_test' else str(pkg/'data')
  subprocess.run([*run,str(binary),arg],check=True)

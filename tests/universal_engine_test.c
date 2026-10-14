@@ -67,6 +67,10 @@ int main(int argc,char **argv){assert(argc==2);char root[]="/tmp/ul-engine-XXXXX
     apply(s,0);for(int i=0;i<2000&&ul_test_phase(s)!=2;i++){block(s);sleep_ms();}CHECK(ul_test_phase(s)==2);
     ul_transport(s,1,1);for(int i=0;i<10;i++)block(s);CHECK(ul_active_slot(s)==1&&ul_test_phase(s)==1);
     ul_transport(s,1,0);CHECK(ready(s,0));
+    /* Cancel a project recall after loading: retain old patch AND old values. */
+    ul_test_pause(s,0,1);const char *cancelled_recall="UL1 stereo-lowpass 1 3e800000 3f800000";CHECK(ul_restore(s,cancelled_recall,strlen(cancelled_recall)+1));
+    for(int i=0;i<4000&&ul_test_phase(s)!=3;i++){block(s);sleep_ms();}CHECK(ul_test_phase(s)==3);ul_transport(s,1,1);ul_test_pause(s,0,0);
+    for(int i=0;i<4000&&ul_test_phase(s)!=4;i++){block(s);sleep_ms();}CHECK(ul_test_phase(s)==4);apply(s,0);ul_transport(s,1,0);CHECK(ready(s,0));CHECK(ul_get(s,2)==1);
     /* Ownership held by stalled worker: initialized silence, no Pd overlap. */
     ul_test_pause(s,0,1);apply(s,1);for(int i=0;i<4000&&ul_test_phase(s)!=3;i++){block(s);sleep_ms();}CHECK(ul_test_phase(s)==3);
     for(int i=0;i<5000;i++){memset(out,1,sizeof out);block(s);for(int k=0;k<256;k++)CHECK(out[k]==0);}

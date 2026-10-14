@@ -1,3 +1,4 @@
+#define _GNU_SOURCE
 /* Linux link-time interposition: callback and setters must not invoke these. */
 #include <stddef.h>
 #include <stdlib.h>
@@ -25,3 +26,7 @@ ssize_t __real_read(int,void*,size_t);ssize_t __wrap_read(int fd,void*p,size_t n
 ssize_t __real_write(int,const void*,size_t);ssize_t __wrap_write(int fd,const void*p,size_t n){forbidden("write");return __real_write(fd,p,n);}
 int __real_close(int);int __wrap_close(int fd){forbidden("close");return __real_close(fd);}
 int __real_nanosleep(const struct timespec*,struct timespec*);int __wrap_nanosleep(const struct timespec*a,struct timespec*b){forbidden("sleep");return __real_nanosleep(a,b);}
+
+/* _FILE_OFFSET_BITS=64 redirects Linux file opens to these symbols. */
+int __real_open64(const char*,int,...);int __wrap_open64(const char *p,int f,...){forbidden("open64");if(f&O_CREAT){va_list a;va_start(a,f);int m=va_arg(a,int);va_end(a);return __real_open64(p,f,m);}return __real_open64(p,f);}
+FILE *__real_fopen64(const char*,const char*);FILE *__wrap_fopen64(const char*p,const char*m){forbidden("fopen64");return __real_fopen64(p,m);}

@@ -203,7 +203,7 @@ static void transaction(ul_engine *s,unsigned slot,const saved_state *restore,in
     pause_worker(s,&s->pause_load,token);
 #endif
     close_graph(s);
-    if(restore&&!restore->none){atomic_store(&s->values[0],restore->values[0]);atomic_store(&s->values[1],restore->values[1]);atomic_store(&s->selected,slot);}
+    if(restore&&!restore->none){old_values[0]=atomic_load(&s->values[0]);old_values[1]=atomic_load(&s->values[1]);atomic_store(&s->values[0],restore->values[0]);atomic_store(&s->values[1],restore->values[1]);atomic_store(&s->selected,slot);}
     if(cancelled(s,token)){code=UL_CANCELLED;goto rollback;}
     if(next&&!open_graph(s,next)){code=UL_OBJECT;goto rollback;}
     if(cancelled(s,token)){code=UL_CANCELLED;goto rollback;}
@@ -224,7 +224,9 @@ publish:
         if(atomic_load(&s->closing))return;
         if(initial&&has_restore(s))atomic_store(&s->cancel,token);
         if(atomic_load(&s->phase)==P_WORK&&atomic_exchange(&s->rollback,0)){
-            if(next!=previous){close_graph(s);discard(next);next=NULL;s->candidate=NULL;code=UL_CANCELLED;
+            if(next!=previous){
+                if(restore&&!restore->none)for(unsigned k=0;k<2;k++){unsigned expected=restore->values[k];atomic_compare_exchange_strong(&s->values[k],&expected,old_values[k]);}
+                close_graph(s);discard(next);next=NULL;s->candidate=NULL;code=UL_CANCELLED;
                 if(previous&&open_graph(s,previous))next=previous;
                 else if(previous){discard(previous);previous=NULL;s->current=NULL;code=UL_ROLLBACK;}
                 goto publish;}
