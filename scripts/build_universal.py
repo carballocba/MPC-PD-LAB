@@ -15,7 +15,7 @@ if sys.platform=='darwin':san=[flag for flag in san if flag!='-g']
 # Loader-only libpd archive: MULTI=false alone still leaves PDTHREADS=1 in Pd.
 # Explicitly disable internal mutexes; the engine enforces exclusive ownership.
 libpd=out/'libpd'
-key=json.dumps({'flags':flags+san,'cc':cc,'pd_no_threads_fix':1},sort_keys=True)
+key=json.dumps({'flags':flags+san,'cc':cc,'pd_no_threads_fix':2},sort_keys=True)
 stamp=out/'libpd-build-config.json'
 if libpd.exists() and (not stamp.exists() or stamp.read_text()!=key):shutil.rmtree(libpd)
 if not libpd.exists():
@@ -24,6 +24,12 @@ if not libpd.exists():
  source=libpd/'pure-data/src/s_inter.c';text=source.read_text()
  for old,new in [('#if PDTHREADS\n#include "pthread.h"\n#endif','#include "pthread.h"'),('void pd_queue_mess(struct _pdinstance instance,','void pd_queue_mess(struct _pdinstance *instance,')]:
   assert text.count(old)==1,'Pinned no-thread repair anchor changed';text=text.replace(old,new)
+ source.write_text(text)
+ source=libpd/'pure-data/src/g_io.c';text=source.read_text()
+ for end in ['t_inlet *vinlet_getit','t_outlet *voutlet_getit']:
+  old='    }\n}\n\n'+end
+  new='    }\n    if (x->x_rb) freebytes(x->x_rb, x->x_nchans * sizeof(*x->x_rb));\n}\n\n'+end
+  assert text.count(old)==1,'Pinned reblocker cleanup anchor changed';text=text.replace(old,new)
  source.write_text(text)
 (libpd/'libs').mkdir(exist_ok=True)
 if not (libpd/'libs/libpd.a').exists():
@@ -43,7 +49,11 @@ for target in ['user','defaults']:shutil.copy2(ROOT/'patches/universal/catalog.j
 for source,name in [(deps/'libpd/LICENSE.txt','libpd.txt'),(deps/'libpd/pure-data/LICENSE.txt','pure-data.txt'),(deps/'mpc-vst-plugins/LICENSE','wrapper.txt'),(ROOT/'vendor/universal/LICENSE','jsmn.txt'),(ROOT/'src/universal/LICENSE','universal.txt'),(ROOT/'vendor/universal/pd-no-threads.patch','pd-no-threads.patch')]:shutil.copy2(source,pkg/'licenses'/name)
 shared=['-dynamiclib'] if sys.platform=='darwin' else ['-shared','-Wl,--no-undefined,-Bsymbolic,--exclude-libs,ALL']
 so=pkg/'mpc_pd_universal_loader.so'
-subprocess.run([*common,*map(str,sources),str(ROOT/'src/universal/vst2_wrap.c'),*libs,*shared,'-o',str(so)],check=True)
+link=[*common,*map(str,sources),str(ROOT/'src/universal/vst2_wrap.c'),*libs,*shared,'-o',str(so)]
+subprocess.run(link,check=True)
+if a.mode=='armv7':
+ first=so.read_bytes();subprocess.run(link,check=True);assert so.read_bytes()==first,'Repeated ARM link differs'
+ print('PASS repeated Universal ARM link byte-identical')
 run=['qemu-arm','-L','/usr/arm-linux-gnueabihf'] if a.mode=='armv7' else []
 for name in ['universal_engine_test','universal_manifest_test','universal_vst_test']:
  test=ROOT/'tests'/(name+'.c')
@@ -51,7 +61,7 @@ for name in ['universal_engine_test','universal_manifest_test','universal_vst_te
  extra=[*map(str,sources),*libs] if name=='universal_engine_test' else [str(ROOT/'src/universal/manifest.c'),'-lm'] if name=='universal_manifest_test' else ([] if sys.platform=='darwin' else ['-ldl'])+['-lm','-lpthread']
  binary=out/name
  if name=='universal_engine_test' and sys.platform!='darwin' and not a.sanitizer:
-  extra += [str(ROOT/'tests/universal_rt_audit.c'),'-DUL_RT_AUDIT','-Wl,'+','.join('--wrap='+symbol for symbol in ['malloc','calloc','realloc','free','open','fopen','pthread_mutex_lock','pthread_join'])]
+  extra += [str(ROOT/'tests/universal_rt_audit.c'),'-DUL_RT_AUDIT','-Wl,'+','.join('--wrap='+symbol for symbol in ['malloc','calloc','realloc','free','open','fopen','pthread_mutex_lock','pthread_join','read','write','close','nanosleep'])]
  subprocess.run([*common,'-DUL_TESTING',str(test),*extra,'-o',str(binary)],check=True)
  arg=str(so) if name=='universal_vst_test' else str(pkg/'data')
  subprocess.run([*run,str(binary),arg],check=True)

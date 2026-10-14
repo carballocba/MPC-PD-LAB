@@ -79,3 +79,14 @@ code lacks pthread declarations when its include is conditional. Two minimal
 repairs are applied only to the copied Loader build source, recorded verbatim in
 vendor/universal/pd-no-threads.patch and redistributed in licenses/. DSP sources
 and the pinned dependency checkout are unchanged.
+
+## LeakSanitizer cleanup correction
+
+Linux LSan identified 47,808 leaked bytes in 664 allocations during the stress
+suite. Every reported allocation originated in the pinned g_io.c signal
+inlet/outlet reblocker constructors. Their destructors release the nested buffers
+but omit freeing x_rb itself. Loader's copied Pd source now frees that array
+after its members. This worker-side lifetime repair does not change DSP and is
+recorded in the redistributed patch; legacy dependencies remain untouched.
+Leak detection stays enabled. The callback audit also interposes read/write/close
+and nanosleep, alongside allocation, open/fopen, locks and join.

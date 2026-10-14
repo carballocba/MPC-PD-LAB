@@ -19,3 +19,21 @@
  {
      fn(obj, data);
  }
+--- a/pure-data/src/g_io.c
++++ b/pure-data/src/g_io.c
+@@ -128,6 +128,7 @@
+         freebytes((x->x_rb)[i].r_buf, x->x_buflength * sizeof(t_sample));
+         resample_free(&(x->x_rb)[i].r_updown);
+     }
++    if (x->x_rb) freebytes(x->x_rb, x->x_nchans * sizeof(*x->x_rb));
+ }
+ 
+ t_inlet *vinlet_getit(t_pd *x)
+@@ -438,6 +439,7 @@
+         freebytes((x->x_rb)[i].r_buf, x->x_buflength * sizeof(t_sample));
+         resample_free(&(x->x_rb)[i].r_updown);
+     }
++    if (x->x_rb) freebytes(x->x_rb, x->x_nchans * sizeof(*x->x_rb));
+ }
+ 
+ t_outlet *voutlet_getit(t_pd *x)
