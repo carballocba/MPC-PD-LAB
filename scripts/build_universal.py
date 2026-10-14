@@ -27,7 +27,8 @@ if not libpd.exists():
  source.write_text(text)
 (libpd/'libs').mkdir(exist_ok=True)
 if not (libpd/'libs/libpd.a').exists():
- subprocess.run(['make','-C',str(libpd),'-j2','CC='+cc,'AR='+('arm-linux-gnueabihf-ar' if a.mode=='armv7' else 'ar'),'STATIC=true','UTIL=false','EXTRA=false','MULTI=false','SETLOCALE=false','ADDITIONAL_CFLAGS='+' '.join(flags+san),'ADDITIONAL_LDFLAGS='+' '.join(san),'libpd'],check=True)
+ subprocess.run(['make','-C',str(libpd),'-j2','CC='+cc,'AR='+('arm-linux-gnueabihf-ar' if a.mode=='armv7' else 'ar'),'STATIC=false','UTIL=false','EXTRA=false','MULTI=false','SETLOCALE=false','ADDITIONAL_CFLAGS='+' '.join(flags+san),'ADDITIONAL_LDFLAGS='+' '.join(san),'libpd'],check=True)
+ subprocess.run([('arm-linux-gnueabihf-ar' if a.mode=='armv7' else 'ar'),'rcs',str(libpd/'libs/libpd.a'),*map(str,sorted(libpd.rglob('*.o')))],check=True)
  stamp.write_text(key)
 archive=libpd/'libs/libpd.a'
 incs=['-I'+str(ROOT/'src/universal'),'-I'+str(libpd/'libpd_wrapper'),'-I'+str(libpd/'pure-data/src'),'-I'+str(deps/'mpc-vst-plugins/wrapper')]

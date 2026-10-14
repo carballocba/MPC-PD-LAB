@@ -34,7 +34,7 @@ _Static_assert(offsetof(AEffect,processReplacing)==(sizeof(void*)==4?80:120),"VS
 typedef struct { double samplePos,sampleRate,nanoSeconds,ppqPos,tempo,barStartPos,cycleStartPos,cycleEndPos;
     int32_t timeSigNumerator,timeSigDenominator,smpteOffset,smpteFrameRate,samplesToNextClock,flags; } time_info;
 typedef struct { AEffect fx;master_fn master;ul_engine *engine;atomic_uint rate,block;char chunk[256]; } wrap;
-static void text(void *p,const char *s,size_t n){if(p&&n){size_t used=strnlen(s,n-1);memcpy(p,s,used);((char*)p)[used]=0;}}
+static void text(void *p,const char *s,size_t n){if(p&&n){size_t used=0;while(used+1<n&&s[used])++used;memcpy(p,s,used);((char*)p)[used]=0;}}
 static uint32_t bits(float x){uint32_t n;memcpy(&n,&x,4);return n;}
 static void set_parameter(AEffect *fx,int32_t i,float v){if(i>=0&&i<4)ul_set(((wrap*)fx->object)->engine,(unsigned)i,v);}
 static float get_parameter(AEffect *fx,int32_t i){return i>=0&&i<4?ul_get(((wrap*)fx->object)->engine,(unsigned)i):0;}
