@@ -1,0 +1,48 @@
+test_assets (test_library.LibraryTests.test_assets) ... ok
+test_bad_ids (test_library.LibraryTests.test_bad_ids) ... ok
+test_bad_revision (test_library.LibraryTests.test_bad_revision) ... ok
+test_boolean_integer (test_library.LibraryTests.test_boolean_integer) ... ok
+test_catalog_order_independent (test_library.LibraryTests.test_catalog_order_independent) ... ok
+test_catalog_tampering (test_library.LibraryTests.test_catalog_tampering) ... ok
+test_cli_catalog_and_check (test_library.LibraryTests.test_cli_catalog_and_check) ... ok
+test_connection_range (test_library.LibraryTests.test_connection_range) ... ok
+test_control_contract (test_library.LibraryTests.test_control_contract) ... ok
+test_corrupt_manifest (test_library.LibraryTests.test_corrupt_manifest) ... ok
+test_corrupt_pd (test_library.LibraryTests.test_corrupt_pd) ... ok
+test_cycles (test_library.LibraryTests.test_cycles) ... ok
+test_deterministic (test_library.LibraryTests.test_deterministic) ... ok
+test_dsp_byte_identity (test_library.LibraryTests.test_dsp_byte_identity) ... ok
+test_duplicate_identity (test_library.LibraryTests.test_duplicate_identity) ... ok
+test_duplicate_json (test_library.LibraryTests.test_duplicate_json) ... ok
+test_examples (test_library.LibraryTests.test_examples) ... ok
+test_executable (test_library.LibraryTests.test_executable) ... ok
+test_externals (test_library.LibraryTests.test_externals) ... ok
+test_extra_file (test_library.LibraryTests.test_extra_file) ... ok
+test_hardlink (test_library.LibraryTests.test_hardlink) ... ok
+test_import_no_overwrite (test_library.LibraryTests.test_import_no_overwrite) ... ok
+test_import_unapproved_no_files (test_library.LibraryTests.test_import_unapproved_no_files) ... ok
+test_license_empty (test_library.LibraryTests.test_license_empty) ... ok
+test_license_reference (test_library.LibraryTests.test_license_reference) ... ok
+test_missing_dependency (test_library.LibraryTests.test_missing_dependency) ... ok
+test_missing_file (test_library.LibraryTests.test_missing_file) ... ok
+test_mutated_revision (test_library.LibraryTests.test_mutated_revision) ... ok
+test_new_revision_preserves_old (test_library.LibraryTests.test_new_revision_preserves_old) ... ok
+test_nonfinite (test_library.LibraryTests.test_nonfinite) ... ok
+test_page_contract (test_library.LibraryTests.test_page_contract) ... ok
+test_paths (test_library.LibraryTests.test_paths) ... ok
+test_profile_not_expanded (test_library.LibraryTests.test_profile_not_expanded) ... ok
+test_provenance (test_library.LibraryTests.test_provenance) ... ok
+test_quota (test_library.LibraryTests.test_quota) ... ok
+test_receiver (test_library.LibraryTests.test_receiver) ... ok
+test_schema_keywords (test_library.LibraryTests.test_schema_keywords) ... ok
+test_symlink (test_library.LibraryTests.test_symlink) ... ok
+test_symlink_root (test_library.LibraryTests.test_symlink_root) ... ok
+test_unapproved (test_library.LibraryTests.test_unapproved) ... ok
+test_unknown_field (test_library.LibraryTests.test_unknown_field) ... ok
+test_unknown_object (test_library.LibraryTests.test_unknown_object) ... ok
+test_wrong_hash (test_library.LibraryTests.test_wrong_hash) ... ok
+
+----------------------------------------------------------------------
+Ran 43 tests in 0.421s
+
+OK
