@@ -1,0 +1,215 @@
+[
+  {
+    "key": "view",
+    "name": "View",
+    "min": 0,
+    "max": 1,
+    "default": 0,
+    "options": [
+      "Library",
+      "Performance"
+    ]
+  },
+  {
+    "key": "select",
+    "name": "Select",
+    "min": 0,
+    "max": 1,
+    "default": 0,
+    "options": [
+      "1",
+      "2",
+      "3",
+      "4"
+    ]
+  },
+  {
+    "key": "mockpage",
+    "name": "Mockset",
+    "min": 0,
+    "max": 1,
+    "default": 0,
+    "options": [
+      "A",
+      "B"
+    ]
+  },
+  {
+    "key": "apply",
+    "name": "Apply",
+    "min": 0,
+    "max": 1,
+    "default": 0,
+    "momentary": true
+  },
+  {
+    "key": "refresh",
+    "name": "Refresh",
+    "min": 0,
+    "max": 1,
+    "default": 0,
+    "momentary": true
+  },
+  {
+    "key": "status",
+    "name": "Status",
+    "min": 0,
+    "max": 1,
+    "default": 0,
+    "type": "readout",
+    "display": "string"
+  },
+  {
+    "key": "row_1",
+    "name": "Row 1",
+    "min": 0,
+    "max": 1,
+    "default": 0,
+    "display": "string"
+  },
+  {
+    "key": "row_2",
+    "name": "Row 2",
+    "min": 0,
+    "max": 1,
+    "default": 0,
+    "display": "string"
+  },
+  {
+    "key": "row_3",
+    "name": "Row 3",
+    "min": 0,
+    "max": 1,
+    "default": 0,
+    "display": "string"
+  },
+  {
+    "key": "row_4",
+    "name": "Row 4",
+    "min": 0,
+    "max": 1,
+    "default": 0,
+    "display": "string"
+  },
+  {
+    "key": "control0",
+    "name": "Slot00",
+    "min": 0,
+    "max": 1,
+    "default": 0
+  },
+  {
+    "key": "control1",
+    "name": "Slot01",
+    "min": 0,
+    "max": 1,
+    "default": 0
+  },
+  {
+    "key": "control2",
+    "name": "Slot02",
+    "min": 0,
+    "max": 1,
+    "default": 0
+  },
+  {
+    "key": "control3",
+    "name": "Slot03",
+    "min": 0,
+    "max": 1,
+    "default": 0
+  },
+  {
+    "key": "control4",
+    "name": "Slot04",
+    "min": 0,
+    "max": 1,
+    "default": 0
+  },
+  {
+    "key": "control5",
+    "name": "Slot05",
+    "min": 0,
+    "max": 1,
+    "default": 0
+  },
+  {
+    "key": "control6",
+    "name": "Slot06",
+    "min": 0,
+    "max": 1,
+    "default": 0
+  },
+  {
+    "key": "control7",
+    "name": "Slot07",
+    "min": 0,
+    "max": 1,
+    "default": 0
+  },
+  {
+    "key": "control8",
+    "name": "Slot08",
+    "min": 0,
+    "max": 1,
+    "default": 0
+  },
+  {
+    "key": "control9",
+    "name": "Slot09",
+    "min": 0,
+    "max": 1,
+    "default": 0
+  },
+  {
+    "key": "control10",
+    "name": "Slot10",
+    "min": 0,
+    "max": 1,
+    "default": 0
+  },
+  {
+    "key": "control11",
+    "name": "Slot11",
+    "min": 0,
+    "max": 1,
+    "default": 0
+  },
+  {
+    "key": "control12",
+    "name": "Slot12",
+    "min": 0,
+    "max": 1,
+    "default": 0
+  },
+  {
+    "key": "control13",
+    "name": "Slot13",
+    "min": 0,
+    "max": 1,
+    "default": 0
+  },
+  {
+    "key": "control14",
+    "name": "Slot14",
+    "min": 0,
+    "max": 1,
+    "default": 0
+  },
+  {
+    "key": "control15",
+    "name": "Slot15",
+    "min": 0,
+    "max": 1,
+    "default": 0
+  },
+  {
+    "key": "selected",
+    "name": "Chosen",
+    "min": 0,
+    "max": 1,
+    "default": 0,
+    "type": "readout",
+    "display": "string"
+  }
+]
