@@ -1,0 +1,439 @@
+{
+  "$id": "urn:pdlab:offline-manifest:1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "assets": {
+      "items": {
+        "maxLength": 128,
+        "minLength": 1,
+        "type": "string"
+      },
+      "maxItems": 0,
+      "minItems": 0,
+      "type": "array",
+      "uniqueItems": true
+    },
+    "author": {
+      "maxLength": 128,
+      "minLength": 1,
+      "type": "string"
+    },
+    "category": {
+      "enum": [
+        "Utility",
+        "Filter"
+      ],
+      "type": "string"
+    },
+    "classification": {
+      "enum": [
+        "Native",
+        "Adapted",
+        "Ported"
+      ],
+      "type": "string"
+    },
+    "dependencies": {
+      "additionalProperties": false,
+      "properties": {
+        "abstractions": {
+          "items": {
+            "maxLength": 128,
+            "minLength": 1,
+            "type": "string"
+          },
+          "maxItems": 63,
+          "minItems": 0,
+          "type": "array",
+          "uniqueItems": true
+        },
+        "externals": {
+          "items": {
+            "maxLength": 128,
+            "minLength": 1,
+            "type": "string"
+          },
+          "maxItems": 0,
+          "minItems": 0,
+          "type": "array",
+          "uniqueItems": true
+        },
+        "vanillaObjects": {
+          "items": {
+            "enum": [
+              "*~",
+              "+~",
+              "-~",
+              "inlet~",
+              "line~",
+              "lop~",
+              "outlet~",
+              "pack",
+              "r",
+              "sig~"
+            ],
+            "type": "string"
+          },
+          "maxItems": 10,
+          "minItems": 0,
+          "type": "array",
+          "uniqueItems": true
+        }
+      },
+      "required": [
+        "vanillaObjects",
+        "abstractions",
+        "externals"
+      ],
+      "type": "object"
+    },
+    "files": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "bytes": {
+            "maximum": 131072,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "licenseRef": {
+            "maxLength": 128,
+            "minLength": 1,
+            "type": "string"
+          },
+          "path": {
+            "maxLength": 240,
+            "minLength": 1,
+            "type": "string"
+          },
+          "sha256": {
+            "maxLength": 64,
+            "minLength": 1,
+            "pattern": "[a-f0-9]{64}",
+            "type": "string"
+          }
+        },
+        "required": [
+          "path",
+          "sha256",
+          "bytes",
+          "licenseRef"
+        ],
+        "type": "object"
+      },
+      "maxItems": 63,
+      "minItems": 1,
+      "type": "array",
+      "uniqueItems": true
+    },
+    "id": {
+      "maxLength": 64,
+      "minLength": 1,
+      "pattern": "[a-z][a-z0-9]*(?:[.-][a-z0-9-]+)*",
+      "type": "string"
+    },
+    "licenses": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "file": {
+            "maxLength": 128,
+            "minLength": 1,
+            "type": "string"
+          },
+          "id": {
+            "maxLength": 128,
+            "minLength": 1,
+            "type": "string"
+          },
+          "provenanceStatus": {
+            "const": "inherited-notice-unresolved-authorship",
+            "type": "string"
+          },
+          "spdx": {
+            "const": "MIT",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "spdx",
+          "file",
+          "provenanceStatus"
+        ],
+        "type": "object"
+      },
+      "maxItems": 8,
+      "minItems": 1,
+      "type": "array",
+      "uniqueItems": true
+    },
+    "mappingVersion": {
+      "const": 1,
+      "type": "integer"
+    },
+    "name": {
+      "maxLength": 128,
+      "minLength": 1,
+      "type": "string"
+    },
+    "pages": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "controlIDs": {
+            "items": {
+              "maxLength": 128,
+              "minLength": 1,
+              "type": "string"
+            },
+            "maxItems": 2,
+            "minItems": 2,
+            "type": "array",
+            "uniqueItems": true
+          },
+          "id": {
+            "maxLength": 128,
+            "minLength": 1,
+            "type": "string"
+          },
+          "title": {
+            "maxLength": 128,
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "controlIDs"
+        ],
+        "type": "object"
+      },
+      "maxItems": 1,
+      "minItems": 1,
+      "type": "array",
+      "uniqueItems": true
+    },
+    "parameters": {
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "automation": {
+            "const": true,
+            "type": "boolean"
+          },
+          "curve": {
+            "const": "linear",
+            "type": "string"
+          },
+          "default": {
+            "maximum": 1,
+            "minimum": 0,
+            "type": "number"
+          },
+          "id": {
+            "maxLength": 128,
+            "minLength": 1,
+            "type": "string"
+          },
+          "max": {
+            "maximum": 1,
+            "minimum": 0,
+            "type": "number"
+          },
+          "min": {
+            "maximum": 1,
+            "minimum": 0,
+            "type": "number"
+          },
+          "receiver": {
+            "maxLength": 128,
+            "minLength": 1,
+            "type": "string"
+          },
+          "slot": {
+            "maximum": 1,
+            "minimum": 0,
+            "type": "integer"
+          },
+          "smoothingMs": {
+            "const": 0,
+            "type": "integer"
+          },
+          "type": {
+            "const": "continuous",
+            "type": "string"
+          },
+          "unit": {
+            "maxLength": 128,
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "slot",
+          "receiver",
+          "type",
+          "min",
+          "max",
+          "default",
+          "curve",
+          "unit",
+          "smoothingMs",
+          "automation"
+        ],
+        "type": "object"
+      },
+      "maxItems": 2,
+      "minItems": 2,
+      "type": "array",
+      "uniqueItems": true
+    },
+    "revision": {
+      "maxLength": 32,
+      "minLength": 1,
+      "pattern": "[A-Za-z0-9][A-Za-z0-9_-]*",
+      "type": "string"
+    },
+    "runtime": {
+      "additionalProperties": false,
+      "properties": {
+        "audio": {
+          "additionalProperties": false,
+          "properties": {
+            "inputs": {
+              "const": 2,
+              "type": "integer"
+            },
+            "kind": {
+              "const": "effect",
+              "type": "string"
+            },
+            "outputs": {
+              "const": 2,
+              "type": "integer"
+            },
+            "sampleRate": {
+              "const": 44100,
+              "type": "integer"
+            }
+          },
+          "required": [
+            "kind",
+            "inputs",
+            "outputs",
+            "sampleRate"
+          ],
+          "type": "object"
+        },
+        "entry": {
+          "const": "main.pd",
+          "type": "string"
+        },
+        "midi": {
+          "additionalProperties": false,
+          "properties": {
+            "input": {
+              "const": false,
+              "type": "boolean"
+            },
+            "output": {
+              "const": false,
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "input",
+            "output"
+          ],
+          "type": "object"
+        },
+        "profile": {
+          "const": "vanilla-fx-current-1",
+          "type": "string"
+        }
+      },
+      "required": [
+        "profile",
+        "entry",
+        "audio",
+        "midi"
+      ],
+      "type": "object"
+    },
+    "schemaVersion": {
+      "const": 1,
+      "type": "integer"
+    },
+    "source": {
+      "additionalProperties": false,
+      "properties": {
+        "path": {
+          "maxLength": 240,
+          "minLength": 1,
+          "type": "string"
+        },
+        "revision": {
+          "maxLength": 64,
+          "minLength": 1,
+          "type": "string"
+        },
+        "sha256": {
+          "maxLength": 64,
+          "minLength": 1,
+          "pattern": "[a-f0-9]{64}",
+          "type": "string"
+        },
+        "url": {
+          "maxLength": 256,
+          "minLength": 1,
+          "type": "string"
+        }
+      },
+      "required": [
+        "url",
+        "revision",
+        "path",
+        "sha256"
+      ],
+      "type": "object"
+    },
+    "state": {
+      "additionalProperties": false,
+      "properties": {
+        "policy": {
+          "const": "controls-only",
+          "type": "string"
+        }
+      },
+      "required": [
+        "policy"
+      ],
+      "type": "object"
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "id",
+    "revision",
+    "name",
+    "author",
+    "category",
+    "classification",
+    "source",
+    "runtime",
+    "mappingVersion",
+    "parameters",
+    "pages",
+    "dependencies",
+    "assets",
+    "licenses",
+    "files",
+    "state"
+  ],
+  "title": "PD LAB offline current-profile manifest; not runtime ABI",
+  "type": "object"
+}
