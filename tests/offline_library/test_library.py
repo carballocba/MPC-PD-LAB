@@ -16,7 +16,7 @@ class LibraryTests(unittest.TestCase):
         self.base = Path(self.tmp.name).resolve()
         self.root = self.base/'library'
         shutil.copytree(ROOT/'library-v03', self.root)
-        self.patch = self.root/'patches/org.pdlab.stereo-trim/1'
+        self.patch = self.root/'patches/org.pdlab.original-gain-mix/1'
         self.approvals = self.base/'approvals.json'
         shutil.copyfile(ROOT/'docs/library-v03/fixture-approvals.json',self.approvals)
     def tearDown(self): self.tmp.cleanup()
@@ -32,12 +32,20 @@ class LibraryTests(unittest.TestCase):
         for r in m['files']:
             data=(self.patch/r['path']).read_bytes();r.update(sha256=lib.sha(data),bytes=len(data))
         m['source']['sha256']=lib.sha((self.patch/'main.pd').read_bytes());self.save(m)
-    def catalog(self, previous=None):return lib.build_catalog(self.root,self.approvals,previous)
+    def catalog(self, previous=None):return lib.build_catalog(self.root,self.approvals,previous,ROOT/'docs/library-v03/revocations.json' if previous is None else None)
     def test_examples(self):
         self.assertEqual(self.catalog(),lib.loads((ROOT/'docs/library-v03/example-catalog.json').read_bytes()))
-    def test_dsp_byte_identity(self):
-        for name in ['trim','lowpass']:
-            self.assertEqual((ROOT/f'patches/universal/{name}/main.pd').read_bytes(),(self.root/f'patches/org.pdlab.stereo-{name}/1/main.pd').read_bytes())
+    def test_new_dsp_independent(self):
+        import importlib.util
+        spec=importlib.util.spec_from_file_location('creator',ROOT/'tools/pdlab_offline/create_original_fixtures.py')
+        import sys
+        sys.path.insert(0,str(ROOT/'tools/pdlab_offline'))
+        creator=importlib.util.module_from_spec(spec);spec.loader.exec_module(creator)
+        for suffix,old in [('gain-mix','trim'),('lowpass','lowpass')]:
+            data=(self.root/f'patches/org.pdlab.original-{suffix}/1/main.pd').read_bytes()
+            self.assertNotEqual((ROOT/f'patches/universal/{old}/main.pd').read_bytes(),data)
+            self.assertEqual(data,creator.graph(suffix=='lowpass'))
+
     def test_deterministic(self): self.assertEqual(lib.canonical(self.catalog()),lib.canonical(self.catalog()))
     def test_catalog_tampering(self):
         c=self.catalog();c['patches'][0]['treeSha256']='0'*64
@@ -60,7 +68,7 @@ class LibraryTests(unittest.TestCase):
     def test_corrupt_manifest(self):(self.patch/'manifest.json').write_bytes(b'{');self.reject()
     def test_corrupt_pd(self):(self.patch/'main.pd').write_bytes(b'garbage;');self.rehash();self.reject()
     def test_unknown_object(self):
-        p=self.patch/'main.pd';p.write_text(p.read_text().replace('lop~','shell').replace('sig~ 1','shell'));self.rehash();self.reject()
+        p=self.patch/'main.pd';p.write_text(p.read_text().replace('inlet~','shell',1));self.rehash();self.reject()
     def test_receiver(self):
         p=self.patch/'main.pd';p.write_text(p.read_text().replace('r ul-gain','r pd'));self.rehash();self.reject()
     def test_missing_dependency(self):m=self.manifest();m['dependencies']['vanillaObjects'].remove('r');self.save(m);self.reject()
@@ -87,7 +95,7 @@ class LibraryTests(unittest.TestCase):
         with self.assertRaises(lib.Invalid):self.catalog()
     def test_mutated_revision(self):
         previous=self.base/'previous.json';previous.write_bytes(lib.canonical(self.catalog()))
-        p=self.patch/'main.pd';p.write_text(p.read_text().replace('pack f 10','pack f 11'));self.rehash()
+        p=self.patch/'main.pd';p.write_text(p.read_text().replace('pack f 20','pack f 21'));self.rehash()
         r,_=lib.validate_patch(self.patch)
         a=lib.loads(self.approvals.read_bytes())
         for x in a['approvals']:
@@ -109,7 +117,7 @@ class LibraryTests(unittest.TestCase):
         root=self.base/'imported';root.mkdir()
         lib.import_patch(self.patch,root,self.approvals)
         with self.assertRaises(lib.Invalid):lib.import_patch(self.patch,root,self.approvals)
-        self.assertEqual(lib.validate_patch(self.patch)[0],lib.validate_patch(root/'patches/org.pdlab.stereo-trim/1')[0])
+        self.assertEqual(lib.validate_patch(self.patch)[0],lib.validate_patch(root/'patches/org.pdlab.original-gain-mix/1')[0])
     def test_import_unapproved_no_files(self):
         root=self.base/'imported';root.mkdir();self.approvals.write_bytes(lib.canonical({'schemaVersion':1,'approvals':[]}))
         with self.assertRaises(lib.Invalid):lib.import_patch(self.patch,root,self.approvals)
@@ -147,6 +155,37 @@ class LibraryTests(unittest.TestCase):
         self.assertEqual(before,dest.read_bytes())
         doc=lib.loads(before);doc['patches'][0]['revision']='9';dest.write_bytes(lib.canonical(doc))
         self.assertNotEqual(subprocess.run(args+['check']+tail,capture_output=True).returncode,0)
+    def test_no_license_grant(self):
+        m=self.manifest();self.assertEqual(m['licenses'][0]['spdx'],'NOASSERTION')
+        c=self.catalog();self.assertFalse(c['runtimeApproved']);self.assertFalse(c['redistributionApproved'])
+    def test_mit_claim_rejected(self):
+        m=self.manifest();m['licenses'][0]['spdx']='MIT';self.save(m);self.reject()
+    def test_quarantine_rejected(self):
+        old=ROOT/'quarantine/stage1-fixtures/library-v03/patches/org.pdlab.stereo-trim/1'
+        with self.assertRaises(lib.Invalid):lib.validate_patch(old)
+    def test_old_approvals_rejected(self):
+        with self.assertRaises(lib.Invalid):lib.approval_records(ROOT/'quarantine/stage1-fixtures/historical-approvals-NOT-VALID.json')
+    def test_explicit_revocation(self):
+        prev=ROOT/'quarantine/stage1-fixtures/historical-catalog-NOT-VALID.json'
+        with self.assertRaises(lib.Invalid):lib.build_catalog(self.root,self.approvals,prev)
+        cat=lib.build_catalog(self.root,self.approvals,prev,ROOT/'docs/library-v03/revocations.json')
+        self.assertEqual(len(cat['revoked']),2)
+    def test_wrong_revocation_hash(self):
+        rev=lib.loads((ROOT/'docs/library-v03/revocations.json').read_bytes());rev['revoked'][0]['treeSha256']='0'*64
+        path=self.base/'revoked.json';path.write_bytes(lib.canonical(rev))
+        with self.assertRaises(lib.Invalid):lib.build_catalog(self.root,self.approvals,ROOT/'quarantine/stage1-fixtures/historical-catalog-NOT-VALID.json',path)
+    def test_quarantine_bytes_preserved(self):
+        import subprocess
+        old=ROOT/'quarantine/stage1-fixtures/library-v03'
+        for p in old.rglob('*'):
+            if p.is_file():
+                original=subprocess.check_output(['git','-C',str(ROOT),'show','c565aaf:library-v03/'+p.relative_to(old).as_posix()])
+                self.assertEqual(p.read_bytes(),original)
+    def test_provenance_generator(self):
+        p=lib.loads((self.patch/'PROVENANCE.json').read_bytes())
+        self.assertEqual(p['creation']['generatorSha256'],lib.sha((ROOT/'tools/pdlab_offline/create_original_fixtures.py').read_bytes()))
+        self.assertFalse(p['priorPatchCodeCopied'])
+        self.assertEqual(p['creation']['rightsHolder'],'not established')
     def test_connection_range(self):
         with self.assertRaises(lib.Invalid):lib.audit_pd(b'#N canvas 0 0 1 1 10; #X obj 0 0 inlet~; #X connect 99 0 0 0;',set())
 

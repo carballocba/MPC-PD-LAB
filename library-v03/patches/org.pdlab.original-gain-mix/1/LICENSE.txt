@@ -1,0 +1,7 @@
+LICENSE STATUS: NO GRANT ESTABLISHED
+These new Pd fixtures were generated specifically for PD LAB in the task recorded
+in PROVENANCE.json. No copyright holder is asserted by this file.
+The proposed MIT template is in docs/original-fixtures/MIT-DRAFT.txt.
+That template is NOT an effective grant for these files. Publication under MIT
+requires documented authorization from the appropriate rights holder(s).
+Offline development/test admission is not runtime or redistribution approval.

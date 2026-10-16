@@ -228,6 +228,7 @@ def validate_patch(root):
     require(m['pages'] == [{'id': 'main', 'title': 'Main', 'controlIDs': ['gain', 'mix']}], 'current profile pages')
     # Canonical record array, not raw concatenation. Manifest hashes exact bytes.
     tree = [{'path': p, 'sha256': sha(data), 'bytes': len(data)} for p, data in sorted(files.items())]
+    require(all(x['spdx'] == 'NOASSERTION' and x['provenanceStatus'] == 'pending-rightsholder-authorization' for x in licenses.values()), 'effective license not established for this profile')
     return {'id': m['id'], 'revision': m['revision'], 'manifestSha256': sha(files['manifest.json']),
             'treeSha256': sha(canonical(tree)), 'profile': PROFILE}, files
 
@@ -238,14 +239,14 @@ def approval_records(path):
     out = {}
     for a in doc['approvals']:
         require(set(a) == {'id', 'revision', 'treeSha256', 'reviewer', 'scope', 'licenseDecision'}, 'approval fields')
-        require(a['scope'] == 'offline-fixture' and a['licenseDecision'] == 'inherited-notice-local-only' and
+        require(a['scope'] == 'offline-fixture' and a['licenseDecision'] == 'pending-rightsholder-authorization' and
                 isinstance(a['reviewer'], str) and 0 < len(a['reviewer'].strip()) <= 128, 'approval scope/license decision')
         key = (a['id'], a['revision'])
         require(key not in out, 'duplicate approval')
         out[key] = a
     return out
 
-def build_catalog(root, approvals, previous=None):
+def build_catalog(root, approvals, previous=None, revocations=None):
     root = Path(root)
     inventory = regular_tree(root)
     manifests = sorted(p for p in inventory if p.endswith('/manifest.json'))
@@ -267,8 +268,21 @@ def build_catalog(root, approvals, previous=None):
     require(keys == approved.keys(), 'approval inventory mismatch')
     require(entries, 'empty catalog')
     result = {'schemaVersion': 1, 'hashAlgorithm': 'sha256-record-array-v1',
-              'scope': 'offline-fixture', 'redistributionApproved': False,
+              'scope': 'offline-fixture', 'redistributionApproved': False, 'runtimeApproved': False,
               'patches': sorted(entries, key=lambda x: (x['id'], x['revision']))}
+    revoked = {}
+    if revocations:
+        doc = loads(Path(revocations).read_bytes())
+        require(isinstance(doc, dict) and set(doc) == {'schemaVersion', 'revoked'} and type(doc['schemaVersion']) is int and doc['schemaVersion'] == 1, 'revocation format')
+        for row in doc['revoked']:
+            require(set(row) == {'id', 'revision', 'treeSha256', 'reason'} and
+                    row['reason'] == 'misattributed-jsmn-license-rights-unresolved', 'revocation fields')
+            key = (row['id'], row['revision'])
+            require(key not in revoked and key not in keys, 'revoked identity present/duplicated')
+            require(isinstance(row['treeSha256'], str) and re.fullmatch('[a-f0-9]{64}', row['treeSha256']), 'revocation hash')
+            revoked[key] = row['treeSha256']
+    result['revoked'] = [dict(id=k[0], revision=k[1], treeSha256=v,
+                             reason='misattributed-jsmn-license-rights-unresolved') for k,v in sorted(revoked.items())]
     if previous:
         old = loads(Path(previous).read_bytes())
         # Previous catalog is a trusted baseline supplied by reviewer, not self-authenticating.
@@ -276,7 +290,8 @@ def build_catalog(root, approvals, previous=None):
         for x in entries:
             key = (x['id'], x['revision'])
             require(key not in prior or prior[key] == x['treeSha256'], 'immutable revision changed')
-        require(prior.keys() <= keys, 'previous revisions must remain available')
+        require(prior.keys() <= keys | revoked.keys(), 'previous revisions must remain available or explicitly revoked')
+        require(all(prior.get(k) == v for k,v in revoked.items()), 'revocation does not match trusted baseline')
     return result
 
 def write_new(path, data):
@@ -315,7 +330,7 @@ def main():
     patch = sub.add_parser('patch'); patch.add_argument('folder')
     for cmd in ('catalog', 'check'):
         c = sub.add_parser(cmd); c.add_argument('root'); c.add_argument('--approvals', required=True)
-        c.add_argument('--previous'); c.add_argument('--catalog', required=True)
+        c.add_argument('--previous'); c.add_argument('--revocations'); c.add_argument('--catalog', required=True)
     imp = sub.add_parser('import'); imp.add_argument('source'); imp.add_argument('root'); imp.add_argument('--approvals', required=True)
     a = p.parse_args()
     try:
@@ -324,12 +339,12 @@ def main():
         elif a.command == 'import':
             print(canonical(import_patch(a.source, a.root, a.approvals)).decode(), end='')
         else:
-            catalog = build_catalog(a.root, a.approvals, a.previous)
+            catalog = build_catalog(a.root, a.approvals, a.previous, a.revocations)
             if a.command == 'catalog':
                 write_new(a.catalog, canonical(catalog))
             else:
                 require(canonical(loads(Path(a.catalog).read_bytes())) == canonical(catalog), 'catalog does not match approved library')
-            print('OK: approved offline catalog; NOT runtime or redistribution approval')
+            print('OK: technically validated offline catalog; rights authorization PENDING; NOT runtime or redistribution approval')
     except (Invalid, OSError, KeyError, TypeError, RecursionError) as exc:
         p.exit(1, 'REJECTED: ' + str(exc) + '\n')
 

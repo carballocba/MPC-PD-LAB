@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "revoked": [
+    {
+      "id": "org.pdlab.stereo-lowpass",
+      "revision": "1",
+      "treeSha256": "25bff3d7e4390d1987fc4313624bda911d8f07b65aa6371f995647d81b9b3411",
+      "reason": "misattributed-jsmn-license-rights-unresolved"
+    },
+    {
+      "id": "org.pdlab.stereo-trim",
+      "revision": "1",
+      "treeSha256": "868745c6cbcca791dacf8bd4875d057790ec20f20c9605281afbcefe22defe04",
+      "reason": "misattributed-jsmn-license-rights-unresolved"
+    }
+  ]
+}
