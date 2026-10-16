@@ -11,11 +11,11 @@ test_corrupt_manifest (test_library.LibraryTests.test_corrupt_manifest) ... ok
 test_corrupt_pd (test_library.LibraryTests.test_corrupt_pd) ... ok
 test_cycles (test_library.LibraryTests.test_cycles) ... ok
 test_deterministic (test_library.LibraryTests.test_deterministic) ... ok
-test_dsp_byte_identity (test_library.LibraryTests.test_dsp_byte_identity) ... ok
 test_duplicate_identity (test_library.LibraryTests.test_duplicate_identity) ... ok
 test_duplicate_json (test_library.LibraryTests.test_duplicate_json) ... ok
 test_examples (test_library.LibraryTests.test_examples) ... ok
 test_executable (test_library.LibraryTests.test_executable) ... ok
+test_explicit_revocation (test_library.LibraryTests.test_explicit_revocation) ... ok
 test_externals (test_library.LibraryTests.test_externals) ... ok
 test_extra_file (test_library.LibraryTests.test_extra_file) ... ok
 test_hardlink (test_library.LibraryTests.test_hardlink) ... ok
@@ -25,13 +25,20 @@ test_license_empty (test_library.LibraryTests.test_license_empty) ... ok
 test_license_reference (test_library.LibraryTests.test_license_reference) ... ok
 test_missing_dependency (test_library.LibraryTests.test_missing_dependency) ... ok
 test_missing_file (test_library.LibraryTests.test_missing_file) ... ok
+test_mit_claim_rejected (test_library.LibraryTests.test_mit_claim_rejected) ... ok
 test_mutated_revision (test_library.LibraryTests.test_mutated_revision) ... ok
+test_new_dsp_independent (test_library.LibraryTests.test_new_dsp_independent) ... ok
 test_new_revision_preserves_old (test_library.LibraryTests.test_new_revision_preserves_old) ... ok
+test_no_license_grant (test_library.LibraryTests.test_no_license_grant) ... ok
 test_nonfinite (test_library.LibraryTests.test_nonfinite) ... ok
+test_old_approvals_rejected (test_library.LibraryTests.test_old_approvals_rejected) ... ok
 test_page_contract (test_library.LibraryTests.test_page_contract) ... ok
 test_paths (test_library.LibraryTests.test_paths) ... ok
 test_profile_not_expanded (test_library.LibraryTests.test_profile_not_expanded) ... ok
 test_provenance (test_library.LibraryTests.test_provenance) ... ok
+test_provenance_generator (test_library.LibraryTests.test_provenance_generator) ... ok
+test_quarantine_bytes_preserved (test_library.LibraryTests.test_quarantine_bytes_preserved) ... ok
+test_quarantine_rejected (test_library.LibraryTests.test_quarantine_rejected) ... ok
 test_quota (test_library.LibraryTests.test_quota) ... ok
 test_receiver (test_library.LibraryTests.test_receiver) ... ok
 test_schema_keywords (test_library.LibraryTests.test_schema_keywords) ... ok
@@ -41,8 +48,9 @@ test_unapproved (test_library.LibraryTests.test_unapproved) ... ok
 test_unknown_field (test_library.LibraryTests.test_unknown_field) ... ok
 test_unknown_object (test_library.LibraryTests.test_unknown_object) ... ok
 test_wrong_hash (test_library.LibraryTests.test_wrong_hash) ... ok
+test_wrong_revocation_hash (test_library.LibraryTests.test_wrong_revocation_hash) ... ok
 
 ----------------------------------------------------------------------
-Ran 43 tests in 0.421s
+Ran 51 tests in 0.431s
 
 OK

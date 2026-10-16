@@ -1,0 +1,4 @@
+PASS Stereo Gain/Mix: 36 gain/mix/sine/impulse/LR cases; max_abs_error=7.4505806e-09; response100Hz=1.000000 response9000Hz=1.000000
+pd 0.56.5
+PASS Stereo Lowpass: 36 gain/mix/sine/impulse/LR cases; max_abs_error=3.27033754e-08; response100Hz=0.994681 response9000Hz=0.114058
+pd 0.56.5
